@@ -50,10 +50,10 @@ class LabelWidget extends StatelessWidget {
           textDirection: TextDirection.rtl,
           child: AutoSizeText(
             product.fullNameFa,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: AppFonts.persianFont,
               fontWeight: FontWeight.bold,
-              fontSize: 18,
+              fontSize: labelSize.persianFontSize,
             ),
             textAlign: TextAlign.center,
             maxLines: 1,
@@ -64,10 +64,10 @@ class LabelWidget extends StatelessWidget {
         // Middle: Full product name and info in English
         AutoSizeText(
           product.fullNameEn,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: AppFonts.englishFont,
             fontWeight: FontWeight.bold,
-            fontSize: 14,
+            fontSize: labelSize.englishFontSize,
           ),
           textAlign: TextAlign.center,
           maxLines: 1,
@@ -82,10 +82,10 @@ class LabelWidget extends StatelessWidget {
             // Dollar sign and main price
             Text(
               "\$${product.price.floor()}.",
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: AppFonts.englishFont,
                 fontWeight: FontWeight.bold,
-                fontSize: 26,
+                fontSize: labelSize.priceFontSize,
               ),
             ),
 
@@ -94,18 +94,21 @@ class LabelWidget extends StatelessWidget {
               padding: const EdgeInsets.only(top: 4.0),
               child: Text(
                 _getCentsFormatted(product.price),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: AppFonts.englishFont,
                   fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                  fontSize: labelSize.englishFontSize,
                 ),
               ),
             ),
 
             // /Ea. part
-            const Text(
+            Text(
               "/Ea.",
-              style: TextStyle(fontFamily: AppFonts.englishFont, fontSize: 14),
+              style: TextStyle(
+                fontFamily: AppFonts.englishFont,
+                fontSize: labelSize.englishFontSize,
+              ),
             ),
           ],
         ),

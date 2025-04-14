@@ -14,6 +14,9 @@ class LabelSize {
   final double pageMarginLeftCm;
   final double pageMarginRightCm;
   final double pageMarginBottomCm;
+  final double priceFontSize;
+  final double persianFontSize;
+  final double englishFontSize;
 
   const LabelSize({
     required this.name,
@@ -27,6 +30,9 @@ class LabelSize {
     this.pageMarginLeftCm = 1.0,
     this.pageMarginRightCm = 1.0,
     this.pageMarginBottomCm = 1.0,
+    this.englishFontSize = 14.0,
+    this.persianFontSize = 18.0,
+    this.priceFontSize = 26.0,
   });
 
   // Convert measurements for PDF (72 points per inch)
@@ -82,6 +88,21 @@ class LabelTemplates {
     pageMarginRightCm: 0.8, // Right margin
     pageMarginBottomCm: 1.0, // Bottom margin
   );
-
-  static List<LabelSize> get allSizes => [standard];
+  static const LabelSize fridge = LabelSize(
+    name: "2 x 10 cm Label",
+    widthCm: 10.0, // 10 cm width
+    heightCm: 2, // 2.0 cm height
+    columnsPerPage: 2, // 2 labels per row
+    rowsPerPage: 11, // 7 rows of labels per page
+    horizontalSpacingCm: 0.1, // Small gap between columns
+    verticalSpacingCm: 0.1, // Small gap between rows
+    pageMarginTopCm: 1.0, // Top margin
+    pageMarginLeftCm: 0.5, // Left margin
+    pageMarginRightCm: 0.5, // Right margin
+    pageMarginBottomCm: 1.0, // Bottom margin
+    priceFontSize: 18.0,
+    persianFontSize: 14.0,
+    englishFontSize: 12.0,
+  );
+  static List<LabelSize> get allSizes => [standard, fridge];
 }
