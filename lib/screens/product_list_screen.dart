@@ -282,8 +282,38 @@ class _ProductListScreenState extends State<ProductListScreen> {
           onSelected: (_) {}, // No-op since selection is not used here
           onEdit: () => _editProduct(product),
           onDelete: () => _deleteProduct(product),
+          onDuplicate:
+              () => _duplicateProduct(product), // New duplicate handler
         );
       },
     );
+  }
+
+  Future<void> _duplicateProduct(Product product) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Call the database service to duplicate the product
+      await _databaseService.duplicateProduct(product.id);
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${product.nameEn} has been duplicated'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Reload the products list to show the new duplicate
+      await _loadProducts();
+    } catch (e) {
+      _showErrorSnackBar('Error duplicating product: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 }

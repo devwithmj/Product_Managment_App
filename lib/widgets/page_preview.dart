@@ -77,6 +77,36 @@ class PagePreview extends StatelessWidget {
       );
     }
 
+    // Add visual debugging information to show the grid layout
+    // This can be useful for troubleshooting label placement
+    for (int row = 0; row < labelSize.rowsPerPage; row++) {
+      for (int col = 0; col < labelSize.columnsPerPage; col++) {
+        final idx = row * labelSize.columnsPerPage + col;
+        if (idx < positions.length) {
+          final position = positions[idx];
+          labelWidgets.add(
+            Positioned(
+              left: position.left,
+              top: position.top,
+              child: Container(
+                width: 20,
+                height: 20,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${row + 1}×${col + 1}',
+                  style: const TextStyle(fontSize: 10, color: Colors.blue),
+                ),
+              ),
+            ),
+          );
+        }
+      }
+    }
+
     return labelWidgets;
   }
 }

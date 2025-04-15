@@ -14,9 +14,11 @@ class LabelSize {
   final double pageMarginLeftCm;
   final double pageMarginRightCm;
   final double pageMarginBottomCm;
-  final double priceFontSize;
-  final double persianFontSize;
+
+  // Font sizes
   final double englishFontSize;
+  final double persianFontSize;
+  final double priceFontSize;
 
   const LabelSize({
     required this.name,
@@ -72,37 +74,85 @@ class LabelSize {
   static final double letterHeightPixels = cmToPixels(letterHeightCm);
 }
 
-// Define only the 3.5 x 10 cm label
+// Define label templates with corrected measurements and font sizes
 class LabelTemplates {
-  // Exact 3.5 x 10 cm labels (on US Letter paper)
+  // Accurate 3 x 10 cm labels (on US Letter paper)
   static const LabelSize standard = LabelSize(
     name: "3 x 10 cm Label",
     widthCm: 10.0, // 10 cm width
-    heightCm: 3, // 3.5 cm height
+    heightCm: 3.0, // 3 cm height
     columnsPerPage: 2, // 2 labels per row
-    rowsPerPage: 7, // 7 rows of labels per page
-    horizontalSpacingCm: 0.2, // Small gap between columns
-    verticalSpacingCm: 0.2, // Small gap between rows
+    rowsPerPage: 8, // 8 rows of labels per page (adjusted for better fit)
+    horizontalSpacingCm: 0.19, // Reduced spacing between columns for better fit
+    verticalSpacingCm: 0.18, // Reduced spacing between rows
     pageMarginTopCm: 1.0, // Top margin
-    pageMarginLeftCm: 0.8, // Left margin
-    pageMarginRightCm: 0.8, // Right margin
+    pageMarginLeftCm: 0.7, // Slightly reduced left margin
+    pageMarginRightCm: 0.7, // Slightly reduced right margin
     pageMarginBottomCm: 1.0, // Bottom margin
+    englishFontSize: 14.0,
+    persianFontSize: 18.0,
+    priceFontSize: 26.0,
   );
-  static const LabelSize fridge = LabelSize(
-    name: "2 x 10 cm Label",
-    widthCm: 10.0, // 10 cm width
-    heightCm: 2, // 2.0 cm height
-    columnsPerPage: 2, // 2 labels per row
-    rowsPerPage: 11, // 7 rows of labels per page
-    horizontalSpacingCm: 0.1, // Small gap between columns
-    verticalSpacingCm: 0.1, // Small gap between rows
-    pageMarginTopCm: 1.0, // Top margin
-    pageMarginLeftCm: 0.5, // Left margin
-    pageMarginRightCm: 0.5, // Right margin
-    pageMarginBottomCm: 1.0, // Bottom margin
+
+  // Small 2 x 10 cm label template with tighter fit and smaller fonts
+  static const LabelSize smallTight = LabelSize(
+    name: "2.5 x 10 cm Label",
+    widthCm: 10.0,
+    heightCm: 2.5, // Smaller height (2 cm)
+    columnsPerPage: 3,
+    rowsPerPage: 10, // More rows per page due to smaller height
+    horizontalSpacingCm: 0.19,
+    verticalSpacingCm: 0.1, // Minimal spacing
+    pageMarginTopCm: 0.7, // Smaller margins
+    pageMarginLeftCm: 0.7,
+    pageMarginRightCm: 0.7,
+    pageMarginBottomCm: 0.7,
+    englishFontSize: 10.0, // Smaller font sizes for smaller label
+    persianFontSize: 12.0,
     priceFontSize: 18.0,
-    persianFontSize: 14.0,
-    englishFontSize: 12.0,
   );
-  static List<LabelSize> get allSizes => [standard, fridge];
+
+  // Small 2 x 6.5 cm label template with 3 columns
+  static const LabelSize small3Column = LabelSize(
+    name: "2 x 6.5 cm (3-Column)",
+    widthCm: 6.5, // Narrower width to fit 3 columns (6.5 cm)
+    heightCm: 2.0, // Smaller height (2 cm)
+    columnsPerPage: 3, // 3 labels per row
+    rowsPerPage: 12, // 12 rows of labels per page
+    horizontalSpacingCm: 0.15, // Tighter horizontal spacing
+    verticalSpacingCm: 0.1, // Minimal vertical spacing
+    pageMarginTopCm: 0.7,
+    pageMarginLeftCm: 0.5, // Reduced margin to fit 3 columns
+    pageMarginRightCm: 0.5, // Reduced margin to fit 3 columns
+    pageMarginBottomCm: 0.7,
+    englishFontSize: 8.0, // Even smaller fonts for narrower label
+    persianFontSize: 10.0,
+    priceFontSize: 16.0,
+  );
+
+  // Alternative 3 x 10 cm template with tighter fit
+  static const LabelSize standardTight = LabelSize(
+    name: "3 x 10 cm Tight",
+    widthCm: 10.0,
+    heightCm: 3.0,
+    columnsPerPage: 2,
+    rowsPerPage: 9, // More rows per page with tighter spacing
+    horizontalSpacingCm: 0.19,
+    verticalSpacingCm: 0.1, // Minimal spacing
+    pageMarginTopCm: 0.7, // Smaller margins
+    pageMarginLeftCm: 0.7,
+    pageMarginRightCm: 0.7,
+    pageMarginBottomCm: 0.7,
+    englishFontSize: 14.0,
+    persianFontSize: 18.0,
+    priceFontSize: 26.0,
+  );
+
+  // Add a list of all available label sizes
+  static List<LabelSize> get allSizes => [
+    standard,
+    standardTight,
+    smallTight,
+    small3Column,
+  ];
 }

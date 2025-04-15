@@ -82,11 +82,26 @@ class PrintService {
       return pdf.save();
     }
 
+    // Determine if we're using the 3-column layout
+    final bool isThreeColumn = labelSize.columnsPerPage == 4;
+
     // Organize products into pages
     final List<List<Product>> pages = LabelLayout.organizeProductsIntoPages(
       products,
       labelSize,
     );
+
+    // Debug information
+    print("PDF page size: ${pageFormat.width}pt × ${pageFormat.height}pt");
+    print(
+      "Labels per page: ${labelSize.rowsPerPage * labelSize.columnsPerPage}",
+    );
+    print("Total pages: ${pages.length}");
+    print("Label dimensions: ${labelSize.widthCm}cm × ${labelSize.heightCm}cm");
+    print(
+      "Font sizes - Persian: ${labelSize.persianFontSize}, English: ${labelSize.englishFontSize}, Price: ${labelSize.priceFontSize}",
+    );
+    print("Using ${isThreeColumn ? '3-column' : 'standard'} layout");
 
     // For each page of products
     for (int pageIndex = 0; pageIndex < pages.length; pageIndex++) {
@@ -110,94 +125,23 @@ class PrintService {
           pageFormat: pageFormat,
           margin: const pw.EdgeInsets.all(0),
           build: (pw.Context context) {
-            print(
-              "PDF page size: ${pageFormat.width}pt × ${pageFormat.height}pt",
-            );
-
             // Create content for the page
             return pw.Stack(
               children: List.generate(count, (i) {
                 final product = pageProducts[i];
                 final position = positions[i];
 
+                // Debug information for label position
                 print(
-                  "Label position: ${position.left}pt, ${position.top}pt, ${position.width}pt × ${position.height}pt",
+                  "Label $i position: left=${position.left}pt, top=${position.top}pt, width=${position.width}pt, height=${position.height}pt",
                 );
 
-                // Match the exact label format from the sample
-                return pw.Positioned(
-                  left: position.left,
-                  top: position.top,
-
-                  child: pw.Container(
-                    width: position.width,
-                    height: position.height,
-                    decoration: pw.BoxDecoration(
-                      border: pw.Border.all(width: 0.5),
-                    ),
-                    padding: const pw.EdgeInsets.all(0),
-                    child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.center,
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-                      children: [
-                        // Persian product name in RTL
-                        pw.Directionality(
-                          textDirection: pw.TextDirection.rtl,
-                          child: pw.Text(
-                            product.fullNameFa,
-                            style: pw.TextStyle(
-                              font: _vazirFontBold,
-                              fontSize: 16,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ),
-
-                        // Full product info in English
-                        pw.Text(
-                          product.fullNameEn,
-                          style: const pw.TextStyle(fontSize: 14),
-                          textAlign: pw.TextAlign.center,
-                        ),
-
-                        // Price with correct formatting
-                        pw.Row(
-                          mainAxisAlignment: pw.MainAxisAlignment.center,
-                          crossAxisAlignment: pw.CrossAxisAlignment.start,
-                          children: [
-                            // Dollar sign and main price
-                            pw.Text(
-                              "\$${product.price.floor()}.",
-                              style: pw.TextStyle(
-                                fontSize: 22,
-                                fontWeight: pw.FontWeight.bold,
-                              ),
-                            ),
-
-                            // Cents
-                            pw.Text(
-                              _getCentsFormatted(product.price),
-                              style: pw.TextStyle(
-                                fontSize: 16,
-                                fontWeight: pw.FontWeight.bold,
-                              ),
-                            ),
-                            pw.Padding(
-                              padding: const pw.EdgeInsets.only(top: 6),
-                              child: pw.Text(
-                                "/Ea.",
-                                style: const pw.TextStyle(fontSize: 16),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        // /Ea. part
-                      ],
-                    ),
-                  ),
-                );
+                // Different label layouts based on the column count
+                if (isThreeColumn) {
+                  return _buildThreeColumnLabel(product, position, labelSize);
+                } else {
+                  return _buildStandardLabel(product, position, labelSize);
+                }
               }),
             );
           },
@@ -209,6 +153,153 @@ class PrintService {
     _savePdfToFile(pdf);
 
     return pdf.save();
+  }
+
+  // Standard 2-column label layout
+  static pw.Widget _buildStandardLabel(
+    Product product,
+    Rect position,
+    LabelSize labelSize,
+  ) {
+    // Calculate proper font scaling based on template
+    final persianFontSize = labelSize.persianFontSize * 0.8; // Adjust for PDF
+    final englishFontSize = labelSize.englishFontSize * 0.8; // Adjust for PDF
+    final priceFontSize = labelSize.priceFontSize * 0.7; // Adjust for PDF
+    final centsFontSize =
+        priceFontSize * 0.6; // Cents are 60% of main price size
+
+    return pw.Positioned(
+      left: position.left,
+      top: position.top,
+      child: pw.Container(
+        width: position.width,
+        height: position.height,
+        decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.5)),
+        padding: const pw.EdgeInsets.all(4), // Added small padding
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
+          mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
+          children: [
+            // Persian product name in RTL
+            pw.Directionality(
+              textDirection: pw.TextDirection.rtl,
+              child: pw.Text(
+                product.fullNameFa,
+                style: pw.TextStyle(
+                  font: _vazirFontBold,
+                  fontSize: persianFontSize,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+                textAlign: pw.TextAlign.center,
+              ),
+            ),
+
+            // Full product info in English
+            pw.Text(
+              product.fullNameEn,
+              style: pw.TextStyle(fontSize: englishFontSize),
+              textAlign: pw.TextAlign.center,
+            ),
+
+            // Price with correct formatting
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.center,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                // Dollar sign and main price
+                pw.Text(
+                  "\$${product.price.floor()}.",
+                  style: pw.TextStyle(
+                    fontSize: priceFontSize,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+
+                // Cents
+                pw.Text(
+                  _getCentsFormatted(product.price),
+                  style: pw.TextStyle(
+                    fontSize: centsFontSize,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+
+                pw.Padding(
+                  padding: pw.EdgeInsets.only(top: centsFontSize * 0.4),
+                  child: pw.Text(
+                    "/Ea.",
+                    style: pw.TextStyle(fontSize: englishFontSize),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Compact 3-column label layout
+  static pw.Widget _buildThreeColumnLabel(
+    Product product,
+    Rect position,
+    LabelSize labelSize,
+  ) {
+    // Use smaller fonts for the 3-column layout
+    final persianFontSize = labelSize.persianFontSize * 0.7; // Further reduced
+    final englishFontSize = labelSize.englishFontSize * 0.7; // Further reduced
+    final priceFontSize = labelSize.priceFontSize * 0.6; // Further reduced
+
+    // For 3-column layout, shorten the product name to fit better
+    String shortenedNameFa = product.nameFa;
+    String shortenedNameEn = product.nameEn;
+
+    return pw.Positioned(
+      left: position.left,
+      top: position.top,
+      child: pw.Container(
+        width: position.width,
+        height: position.height,
+        decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.5)),
+        padding: const pw.EdgeInsets.all(2), // Smaller padding for 3-column
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
+          mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
+          children: [
+            // Persian product name (more compact)
+            pw.Directionality(
+              textDirection: pw.TextDirection.rtl,
+              child: pw.Text(
+                shortenedNameFa,
+                style: pw.TextStyle(
+                  font: _vazirFontBold,
+                  fontSize: persianFontSize,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+                textAlign: pw.TextAlign.center,
+              ),
+            ),
+
+            // English product name (more compact)
+            pw.Text(
+              shortenedNameEn,
+              style: pw.TextStyle(fontSize: englishFontSize),
+              textAlign: pw.TextAlign.center,
+            ),
+
+            // Price (simplified format for compact display)
+            pw.Text(
+              "\$${product.price.toStringAsFixed(2)}",
+              style: pw.TextStyle(
+                fontSize: priceFontSize,
+                fontWeight: pw.FontWeight.bold,
+              ),
+              textAlign: pw.TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // Save PDF to temporary file (for debugging)

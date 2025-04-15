@@ -236,7 +236,7 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
             unitType: _selectedUnitType,
             price: price,
             priceUpdated:
-                false, // Will be set to true automatically if price is different
+                true, // Will be set to true automatically if price is different
             storeLocation: _storeLocation,
             barcode: _barcodeController.text.trim(),
           );
@@ -252,6 +252,7 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
             price:
                 price, // Will automatically set priceUpdated to true if price changed
             storeLocation: _storeLocation,
+            priceUpdated: true,
             barcode: _barcodeController.text.trim(),
           );
         }
@@ -439,7 +440,9 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                                 }
                                 return null;
                               },
-                              keyboardType: TextInputType.number,
+                              keyboardType: TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),

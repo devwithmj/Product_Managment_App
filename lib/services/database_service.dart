@@ -511,6 +511,7 @@ class DatabaseService {
           AppConfig.productsTable,
           where: whereClause.isNotEmpty ? whereClause : null,
           whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
+          orderBy: 'createdAt DESC', // Most recent first
         );
 
         return List.generate(maps.length, (i) => Product.fromMap(maps[i]));
@@ -884,36 +885,57 @@ class DatabaseService {
     }
   }
 
-  // Reset all price updated flags
-  Future<void> resetPriceUpdatedFlags() async {
+  Future<int> resetPriceUpdatedFlags(List<String> productIds) async {
     try {
       await _ensureCacheLoaded();
+      int updatedCount = 0;
 
       // Try database first
       final db = await _getDatabaseIfPossible();
       if (db != null) {
-        await db.update(AppConfig.productsTable, {'priceUpdated': 0});
+        // Use transaction for efficiency with multiple updates
+        await db.transaction((txn) async {
+          for (String id in productIds) {
+            int count = await txn.update(
+              AppConfig.productsTable,
+              {'priceUpdated': 0},
+              where: 'id = ? AND priceUpdated = 1',
+              whereArgs: [id],
+            );
+            updatedCount += count;
+          }
+        });
       }
 
-      // Always update cache
-      for (var product in _productsCache) {
-        product = product.copyWith(priceUpdated: false);
+      // Always update cache too
+      for (int i = 0; i < _productsCache.length; i++) {
+        final product = _productsCache[i];
+        if (productIds.contains(product.id) && product.priceUpdated) {
+          _productsCache[i] = product.copyWith(priceUpdated: false);
+          updatedCount++;
+        }
       }
       await _saveProductsToBackup();
 
-      print('Reset all price updated flags');
+      print('Reset price flags for $updatedCount products');
+      return updatedCount;
     } catch (e) {
-      print('Error resetting price updated flags: $e');
+      print('Error resetting price flags: $e');
 
       // Fallback to cache
       try {
-        for (var i = 0; i < _productsCache.length; i++) {
+        int updatedCount = 0;
+        for (int i = 0; i < _productsCache.length; i++) {
           final product = _productsCache[i];
-          _productsCache[i] = product.copyWith(priceUpdated: false);
+          if (productIds.contains(product.id) && product.priceUpdated) {
+            _productsCache[i] = product.copyWith(priceUpdated: false);
+            updatedCount++;
+          }
         }
         await _saveProductsToBackup();
+        return updatedCount;
       } catch (cacheError) {
-        print('Fatal error resetting price updated flags: $cacheError');
+        print('Fatal error resetting price flags: $cacheError');
         rethrow;
       }
     }
@@ -966,6 +988,65 @@ class DatabaseService {
       print('Successfully recreated database tables');
     } catch (e) {
       print('Error recreating database tables: $e');
+      rethrow;
+    }
+  }
+  // Add this method to your DatabaseService class
+
+  // Duplicate a product
+  Future<Product> duplicateProduct(String productId) async {
+    try {
+      await _ensureCacheLoaded();
+
+      // Get the original product
+      Product? originalProduct;
+
+      // Try database first
+      final db = await _getDatabaseIfPossible();
+      if (db != null) {
+        final List<Map<String, dynamic>> maps = await db.query(
+          AppConfig.productsTable,
+          where: 'id = ?',
+          whereArgs: [productId],
+          limit: 1,
+        );
+
+        if (maps.isNotEmpty) {
+          originalProduct = Product.fromMap(maps.first);
+        }
+      }
+
+      // If not found in database, try cache
+      if (originalProduct == null) {
+        originalProduct = _productsCache.firstWhere(
+          (p) => p.id == productId,
+          orElse: () => throw Exception('Product not found'),
+        );
+      }
+
+      // Create a duplicate with a new ID and "Copy" in the name
+      final duplicatedProduct = Product(
+        id: const Uuid().v4(), // Generate a new ID
+        nameEn: '${originalProduct.nameEn} (Copy)',
+        nameFa: '${originalProduct.nameFa} (کپی)',
+        brandEn: originalProduct.brandEn,
+        brandFa: originalProduct.brandFa,
+        sizeValue: originalProduct.sizeValue,
+        unitType: originalProduct.unitType,
+        price: originalProduct.price,
+        priceUpdated: false, // Always start with priceUpdated as false
+        storeLocation: originalProduct.storeLocation,
+        barcode: '', // Clear barcode for the duplicate
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      // Save the duplicated product
+      await saveProduct(duplicatedProduct);
+
+      return duplicatedProduct;
+    } catch (e) {
+      print('Error duplicating product: $e');
       rethrow;
     }
   }

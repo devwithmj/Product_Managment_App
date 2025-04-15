@@ -512,38 +512,146 @@ class _PrintScreenState extends State<PrintScreen> {
   Widget _buildPreviewAndPrintActions() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.preview),
-              label: const Text(AppStrings.preview),
-              onPressed:
-                  _selectedProducts.isEmpty || _isGeneratingPreview
-                      ? null
-                      : _generatePreview,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+          // Row with action buttons
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Reset Price Flags'),
+                  onPressed:
+                      _selectedProducts.isEmpty || _isGeneratingPreview
+                          ? null
+                          : _resetPriceUpdatedFlags,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    backgroundColor: Colors.orange,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.print),
-              label: const Text(AppStrings.print),
-              onPressed:
-                  _selectedProducts.isEmpty || _isGeneratingPreview
-                      ? null
-                      : _printLabels,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                backgroundColor: Colors.green,
+
+          const SizedBox(height: 12), // Add spacing
+          // Original Preview and Print buttons
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.preview),
+                  label: const Text(AppStrings.preview),
+                  onPressed:
+                      _selectedProducts.isEmpty || _isGeneratingPreview
+                          ? null
+                          : _generatePreview,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.print),
+                  label: const Text(AppStrings.print),
+                  onPressed:
+                      _selectedProducts.isEmpty || _isGeneratingPreview
+                          ? null
+                          : _printLabels,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    backgroundColor: Colors.green,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _resetPriceUpdatedFlags() async {
+    if (_selectedProducts.isEmpty) {
+      _showErrorSnackBar('Please select at least one product');
+      return;
+    }
+
+    // First check if any products actually have the flag set
+    final hasUpdatedProducts = _selectedProducts.any((p) => p.priceUpdated);
+
+    if (!hasUpdatedProducts) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No selected products have price update flags to reset',
+          ),
+          backgroundColor: Colors.blue,
+        ),
+      );
+      return;
+    }
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Reset Price Updated Flags'),
+            content: Text(
+              'This will reset the price update status for ${_selectedProducts.length} selected products. '
+              'Continue?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Reset Flags'),
+              ),
+            ],
+          ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Extract IDs of products with the flag set
+      final List<String> productIds =
+          _selectedProducts
+              .where((p) => p.priceUpdated)
+              .map((p) => p.id)
+              .toList();
+
+      // Use the optimized database method to reset flags
+      final updatedCount = await _databaseService.resetPriceUpdatedFlags(
+        productIds,
+      );
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Reset price flags for $updatedCount products'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Reload the products list
+      await _loadProducts();
+    } catch (e) {
+      _showErrorSnackBar('Error resetting price flags: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 }

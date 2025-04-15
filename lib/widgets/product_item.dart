@@ -10,6 +10,7 @@ class ProductItem extends StatelessWidget {
   final Function(bool) onSelected;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback? onDuplicate; // New callback for duplicate action
 
   const ProductItem({
     Key? key,
@@ -18,6 +19,7 @@ class ProductItem extends StatelessWidget {
     required this.onSelected,
     required this.onEdit,
     required this.onDelete,
+    this.onDuplicate, // Optional parameter for duplicate action
   }) : super(key: key);
 
   @override
@@ -98,12 +100,23 @@ class ProductItem extends StatelessWidget {
               onPressed: () => _showPriceHistory(context),
             ),
             _buildStoreIndicator(),
+            // Duplicate button (new)
+            if (onDuplicate != null)
+              IconButton(
+                icon: const Icon(Icons.copy, color: Colors.purple),
+                tooltip: 'Duplicate Product',
+                onPressed: onDuplicate,
+              ),
+            // Edit button
             IconButton(
               icon: const Icon(Icons.edit, color: AppColors.primary),
+              tooltip: 'Edit Product',
               onPressed: onEdit,
             ),
+            // Delete button
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
+              tooltip: 'Delete Product',
               onPressed: onDelete,
             ),
           ],

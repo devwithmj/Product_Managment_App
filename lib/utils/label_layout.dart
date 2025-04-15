@@ -15,22 +15,24 @@ class LabelLayout {
         LabelSize.letterWidthPoints -
         labelSize.pageMarginLeftPoints -
         labelSize.pageMarginRightPoints;
+
     double availableHeight =
         LabelSize.letterHeightPoints -
         labelSize.pageMarginTopPoints -
         labelSize.pageMarginBottomPoints;
 
-    // Calculate actual label position and size
-    double labelSpaceWidth = availableWidth / labelSize.columnsPerPage;
-    double labelSpaceHeight = availableHeight / labelSize.rowsPerPage;
+    // Calculate column and row dimensions with spacing
+    double columnWidth = availableWidth / labelSize.columnsPerPage;
+    double rowHeight = availableHeight / labelSize.rowsPerPage;
 
-    double labelWidth = labelSpaceWidth - labelSize.horizontalSpacingPoints;
-    double labelHeight = labelSpaceHeight - labelSize.verticalSpacingPoints;
+    // Calculate actual label dimensions
+    double labelWidth = columnWidth - labelSize.horizontalSpacingPoints;
+    double labelHeight = rowHeight - labelSize.verticalSpacingPoints;
 
     for (int row = 0; row < labelSize.rowsPerPage; row++) {
       for (int col = 0; col < labelSize.columnsPerPage; col++) {
-        double x = startX + col * labelSpaceWidth;
-        double y = startY + row * labelSpaceHeight;
+        double x = startX + (col * columnWidth);
+        double y = startY + (row * rowHeight);
 
         positions.add(Rect.fromLTWH(x, y, labelWidth, labelHeight));
       }
@@ -59,26 +61,33 @@ class LabelLayout {
           labelSize.pageMarginBottomCm,
     );
 
-    // Calculate individual label positions
-    double labelSpaceWidth = availableWidth / labelSize.columnsPerPage;
-    double labelSpaceHeight = availableHeight / labelSize.rowsPerPage;
+    // Calculate column and row dimensions with spacing
+    double columnWidth = availableWidth / labelSize.columnsPerPage;
+    double rowHeight = availableHeight / labelSize.rowsPerPage;
 
+    // Calculate actual label dimensions
     double labelWidth =
-        labelSpaceWidth - LabelSize.cmToPixels(labelSize.horizontalSpacingCm);
+        columnWidth - LabelSize.cmToPixels(labelSize.horizontalSpacingCm);
     double labelHeight =
-        labelSpaceHeight - LabelSize.cmToPixels(labelSize.verticalSpacingCm);
+        rowHeight - LabelSize.cmToPixels(labelSize.verticalSpacingCm);
 
     for (int row = 0; row < labelSize.rowsPerPage; row++) {
       for (int col = 0; col < labelSize.columnsPerPage; col++) {
-        double x = startX + col * labelSpaceWidth;
-        double y = startY + row * labelSpaceHeight;
+        double x = startX + (col * columnWidth);
+        double y = startY + (row * rowHeight);
 
         positions.add(Rect.fromLTWH(x, y, labelWidth, labelHeight));
       }
     }
 
+    // Debug info
     print(
-      "Label size: ${labelWidth}px × ${labelHeight}px (${LabelSize.cmToPixels(labelSize.widthCm)}px × ${LabelSize.cmToPixels(labelSize.heightCm)}px expected)",
+      "Page dimensions: ${LabelSize.letterWidthPixels}px × ${LabelSize.letterHeightPixels}px",
+    );
+    print("Available area: ${availableWidth}px × ${availableHeight}px");
+    print("Label size: ${labelWidth}px × ${labelHeight}px");
+    print(
+      "Expected size: ${LabelSize.cmToPixels(labelSize.widthCm)}px × ${LabelSize.cmToPixels(labelSize.heightCm)}px",
     );
 
     return positions;
