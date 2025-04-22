@@ -203,7 +203,7 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
             ),
             actions: <Widget>[
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => loadProduct(existingProduct),
                 child: const Text('Continue Anyway'),
               ),
             ],
@@ -559,6 +559,18 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                   ),
                 ),
               ),
+    );
+  }
+
+  void loadProduct(Product existingProduct) {
+    // Close the current page
+    Navigator.pop(context);
+    // Navigate to the edit screen with the existing product
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProductEditScreen(product: existingProduct),
+      ),
     );
   }
 }
