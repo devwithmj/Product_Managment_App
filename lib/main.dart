@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        cardTheme: const CardTheme(color: AppColors.cardBackground),
+        cardTheme: const CardThemeData(color: AppColors.cardBackground),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,

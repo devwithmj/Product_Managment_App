@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:product_app/widgets/searchbar_widget.dart';
 import '../models/product.dart';
 import '../models/label_template.dart';
 import '../services/database_service.dart';
@@ -17,7 +18,8 @@ class PrintScreen extends StatefulWidget {
 
 class _PrintScreenState extends State<PrintScreen> {
   final DatabaseService _databaseService = DatabaseService();
-
+  String _searchQuery = '';
+  bool _isFilterExpanded = false;
   List<Product> _allProducts = [];
   List<Product> _selectedProducts = [];
   bool _isLoading = true;
@@ -41,6 +43,29 @@ class _PrintScreenState extends State<PrintScreen> {
     _loadProducts();
   }
 
+  void _handleSearch(String query) {
+    setState(() {
+      _searchQuery = query;
+      _selectedProducts.clear(); // Clear selection when searching
+      _pdfData = null; // Clear any generated PDF
+    });
+    _loadProducts();
+  }
+
+  void _clearSearch() {
+    setState(() {
+      _searchQuery = '';
+      _pdfData = null; // Clear any generated PDF
+    });
+    _loadProducts();
+  }
+
+  void _toggleFilterPanel() {
+    setState(() {
+      _isFilterExpanded = !_isFilterExpanded;
+    });
+  }
+
   Future<void> _loadProducts() async {
     setState(() {
       _isLoading = true;
@@ -49,10 +74,22 @@ class _PrintScreenState extends State<PrintScreen> {
     });
 
     try {
-      List<Product> products = await _databaseService.getFilteredProducts(
-        priceUpdated: _priceUpdatedFilter,
-        storeLocation: _locationFilter,
-      );
+      List<Product> products;
+
+      if (_searchQuery.isEmpty) {
+        // No search query, use regular filters
+        products = await _databaseService.getFilteredProducts(
+          priceUpdated: _priceUpdatedFilter,
+          storeLocation: _locationFilter,
+        );
+      } else {
+        // Search with query and filters
+        products = await _databaseService.searchProducts(
+          query: _searchQuery,
+          priceUpdated: _priceUpdatedFilter,
+          storeLocation: _locationFilter,
+        );
+      }
 
       setState(() {
         _allProducts = products;
@@ -217,7 +254,16 @@ class _PrintScreenState extends State<PrintScreen> {
     return Scaffold(
       body: Column(
         children: [
-          // Filters and settings
+          // Search bar (new)
+          SearchBarWidget(
+            onSearch: _handleSearch,
+            onClear: _clearSearch,
+            hintText: 'Search by name, brand or barcode',
+            showFilter:
+                false, // Don't show filter toggle - we keep filters visible
+          ),
+
+          // Filters and settings (keep original)
           _buildPrintSettings(),
 
           // Error message if applicable
@@ -443,11 +489,20 @@ class _PrintScreenState extends State<PrintScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No products found',
+              _searchQuery.isNotEmpty
+                  ? 'No products found matching "$_searchQuery"'
+                  : 'No products found',
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(color: Colors.grey),
+              textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 8),
+            if (_searchQuery.isNotEmpty)
+              ElevatedButton(
+                onPressed: _clearSearch,
+                child: const Text('Clear search'),
+              ),
           ],
         ),
       );

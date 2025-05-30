@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:product_app/widgets/searchbar_widget.dart';
 import '../models/product.dart';
 import '../services/database_service.dart';
 import '../utils/constants.dart';
@@ -16,8 +17,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
   final DatabaseService _databaseService = DatabaseService();
   List<Product> _products = [];
   bool _isLoading = true;
+  String _searchQuery = '';
   StoreLocation? _locationFilter;
   bool? _priceUpdatedFilter;
+  bool _isFilterExpanded = false;
 
   @override
   void initState() {
@@ -31,10 +34,22 @@ class _ProductListScreenState extends State<ProductListScreen> {
     });
 
     try {
-      List<Product> products = await _databaseService.getFilteredProducts(
-        priceUpdated: _priceUpdatedFilter,
-        storeLocation: _locationFilter,
-      );
+      List<Product> products;
+
+      if (_searchQuery.isEmpty) {
+        // No search query, use regular filters
+        products = await _databaseService.getFilteredProducts(
+          priceUpdated: _priceUpdatedFilter,
+          storeLocation: _locationFilter,
+        );
+      } else {
+        // Search with query and filters
+        products = await _databaseService.searchProducts(
+          query: _searchQuery,
+          priceUpdated: _priceUpdatedFilter,
+          storeLocation: _locationFilter,
+        );
+      }
 
       setState(() {
         _products = products;
@@ -79,6 +94,31 @@ class _ProductListScreenState extends State<ProductListScreen> {
     }
   }
 
+  Future<void> _duplicateProduct(Product product) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _databaseService.duplicateProduct(product.id);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${product.nameEn} has been duplicated'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      await _loadProducts();
+    } catch (e) {
+      _showErrorSnackBar('Error duplicating product: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   Future<void> _deleteProduct(Product product) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -116,12 +156,41 @@ class _ProductListScreenState extends State<ProductListScreen> {
     }
   }
 
+  void _handleSearch(String query) {
+    setState(() {
+      _searchQuery = query;
+    });
+    _loadProducts();
+  }
+
+  void _clearSearch() {
+    setState(() {
+      _searchQuery = '';
+    });
+    _loadProducts();
+  }
+
+  void _toggleFilterPanel() {
+    setState(() {
+      _isFilterExpanded = !_isFilterExpanded;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
         children: [
-          // Filter options
+          // Search bar (new)
+          SearchBarWidget(
+            onSearch: _handleSearch,
+            onClear: _clearSearch,
+            hintText: 'Search by name, brand or barcode',
+            showFilter:
+                false, // Don't need filter toggle - we keep filters visible
+          ),
+
+          // Filter options (keep original)
           _buildFilterOptions(),
 
           // Product list
@@ -255,16 +324,25 @@ class _ProductListScreenState extends State<ProductListScreen> {
           const Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey),
           const SizedBox(height: 16),
           Text(
-            'No products found',
+            _searchQuery.isNotEmpty
+                ? 'No products found matching "$_searchQuery"'
+                : 'No products found',
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(color: Colors.grey),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          ElevatedButton(
-            onPressed: _addNewProduct,
-            child: const Text('Add your first product'),
-          ),
+          if (_searchQuery.isEmpty)
+            ElevatedButton(
+              onPressed: _addNewProduct,
+              child: const Text('Add your first product'),
+            )
+          else
+            ElevatedButton(
+              onPressed: _clearSearch,
+              child: const Text('Clear search'),
+            ),
         ],
       ),
     );
@@ -282,38 +360,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
           onSelected: (_) {}, // No-op since selection is not used here
           onEdit: () => _editProduct(product),
           onDelete: () => _deleteProduct(product),
-          onDuplicate:
-              () => _duplicateProduct(product), // New duplicate handler
+          onDuplicate: () => _duplicateProduct(product),
         );
       },
     );
-  }
-
-  Future<void> _duplicateProduct(Product product) async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      // Call the database service to duplicate the product
-      await _databaseService.duplicateProduct(product.id);
-
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${product.nameEn} has been duplicated'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      // Reload the products list to show the new duplicate
-      await _loadProducts();
-    } catch (e) {
-      _showErrorSnackBar('Error duplicating product: $e');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
   }
 }

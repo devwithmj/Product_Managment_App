@@ -5,7 +5,21 @@ import 'package:product_app/utils/number_formatter.dart';
 enum StoreLocation { downtown, uptown, both }
 
 // Define unit types for weight and volume
-enum UnitType { gr, kg, ml, l, piece, pack, box, other }
+enum UnitType {
+  gr,
+  kg,
+  ml,
+  l,
+  piece,
+  pack,
+  box,
+  other,
+  lb,
+  pkg,
+  plb,
+  phandered,
+  ea,
+}
 
 class Product {
   final String id;
@@ -186,8 +200,18 @@ class Product {
         return 'pack';
       case UnitType.box:
         return 'box';
+      case UnitType.lb:
+        return 'lb';
+      case UnitType.pkg:
+        return '/kg';
+      case UnitType.plb:
+        return '/lb';
+      case UnitType.phandered:
+        return '/100gr';
+      case UnitType.ea:
+        return 'ea';
       case UnitType.other:
-        return '';
+        return 'other';
     }
   }
 
@@ -219,7 +243,17 @@ getUnitTypeStringFa(UnitType unit) {
       return 'بسته';
     case UnitType.box:
       return 'جعبه';
+    case UnitType.lb:
+      return 'پوند';
+    case UnitType.pkg:
+      return '/کیلو';
+    case UnitType.plb:
+      return '/پوند';
+    case UnitType.phandered:
+      return '/100گرم';
+    case UnitType.ea:
+      return 'عدد';
     case UnitType.other:
-      return '';
+      return 'Other';
   }
 }

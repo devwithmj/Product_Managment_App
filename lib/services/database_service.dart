@@ -896,11 +896,9 @@ class DatabaseService {
         // Use transaction for efficiency with multiple updates
         await db.transaction((txn) async {
           for (String id in productIds) {
-            int count = await txn.update(
-              AppConfig.productsTable,
-              {'priceUpdated': 0},
-              where: 'id = ? AND priceUpdated = 1',
-              whereArgs: [id],
+            int count = await txn.rawUpdate(
+              'UPDATE ${AppConfig.productsTable} SET priceUpdated = !priceUpdated WHERE id = ?',
+              [id],
             );
             updatedCount += count;
           }
@@ -992,6 +990,155 @@ class DatabaseService {
     }
   }
   // Add this method to your DatabaseService class
+
+  // Search products by query (name, brand, or barcode)
+  Future<List<Product>> searchProducts({
+    required String query,
+    bool? priceUpdated,
+    StoreLocation? storeLocation,
+  }) async {
+    if (query.isEmpty && priceUpdated == null && storeLocation == null) {
+      return getProducts(); // If no filters, return all products
+    }
+
+    try {
+      await _ensureCacheLoaded();
+
+      // Try database first
+      final db = await _getDatabaseIfPossible();
+      if (db != null) {
+        String whereClause = '';
+        List<dynamic> whereArgs = [];
+
+        // Search query for name, brand, or barcode
+        if (query.isNotEmpty) {
+          whereClause = '''
+          (nameEn LIKE ? OR 
+           nameFa LIKE ? OR 
+           brandEn LIKE ? OR 
+           brandFa LIKE ? OR 
+           barcode LIKE ?)
+        ''';
+          final likeQuery = '%$query%';
+          whereArgs.addAll([
+            likeQuery,
+            likeQuery,
+            likeQuery,
+            likeQuery,
+            likeQuery,
+          ]);
+        }
+
+        // Add priceUpdated filter if specified
+        if (priceUpdated != null) {
+          if (whereClause.isNotEmpty) whereClause += ' AND ';
+          whereClause += 'priceUpdated = ?';
+          whereArgs.add(priceUpdated ? 1 : 0);
+        }
+
+        // Add storeLocation filter if specified
+        if (storeLocation != null) {
+          if (whereClause.isNotEmpty) whereClause += ' AND ';
+
+          if (storeLocation == StoreLocation.both) {
+            whereClause +=
+                '(storeLocation = ? OR storeLocation = ? OR storeLocation = ?)';
+            whereArgs.addAll([
+              StoreLocation.both.index,
+              StoreLocation.downtown.index,
+              StoreLocation.uptown.index,
+            ]);
+          } else {
+            whereClause += '(storeLocation = ? OR storeLocation = ?)';
+            whereArgs.addAll([storeLocation.index, StoreLocation.both.index]);
+          }
+        }
+
+        final List<Map<String, dynamic>> maps = await db.query(
+          AppConfig.productsTable,
+          where: whereClause.isNotEmpty ? whereClause : null,
+          whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
+        );
+
+        return List.generate(maps.length, (i) => Product.fromMap(maps[i]));
+      } else {
+        // If database is not available, filter in memory
+        return _productsCache.where((product) {
+          bool match = true;
+
+          // Match query on name, brand, or barcode
+          if (query.isNotEmpty) {
+            final queryLower = query.toLowerCase();
+            match =
+                match &&
+                (product.nameEn.toLowerCase().contains(queryLower) ||
+                    product.nameFa.contains(query) ||
+                    product.brandEn.toLowerCase().contains(queryLower) ||
+                    product.brandFa.contains(query) ||
+                    product.barcode.contains(query));
+          }
+
+          // Match priceUpdated filter
+          if (priceUpdated != null) {
+            match = match && (product.priceUpdated == priceUpdated);
+          }
+
+          // Match storeLocation filter
+          if (storeLocation != null) {
+            if (storeLocation == StoreLocation.both) {
+              match = match && true; // All locations match StoreLocation.both
+            } else {
+              match =
+                  match &&
+                  (product.storeLocation == storeLocation ||
+                      product.storeLocation == StoreLocation.both);
+            }
+          }
+
+          return match;
+        }).toList();
+      }
+    } catch (e) {
+      print('Error searching products: $e');
+
+      // Fallback to in-memory search
+      await _ensureCacheLoaded();
+      return _productsCache.where((product) {
+        bool match = true;
+
+        // Match query on name, brand, or barcode
+        if (query.isNotEmpty) {
+          final queryLower = query.toLowerCase();
+          match =
+              match &&
+              (product.nameEn.toLowerCase().contains(queryLower) ||
+                  product.nameFa.contains(query) ||
+                  product.brandEn.toLowerCase().contains(queryLower) ||
+                  product.brandFa.contains(query) ||
+                  product.barcode.contains(query));
+        }
+
+        // Match priceUpdated filter
+        if (priceUpdated != null) {
+          match = match && (product.priceUpdated == priceUpdated);
+        }
+
+        // Match storeLocation filter
+        if (storeLocation != null) {
+          if (storeLocation == StoreLocation.both) {
+            match = match && true; // All locations match StoreLocation.both
+          } else {
+            match =
+                match &&
+                (product.storeLocation == storeLocation ||
+                    product.storeLocation == StoreLocation.both);
+          }
+        }
+
+        return match;
+      }).toList();
+    }
+  }
 
   // Duplicate a product
   Future<Product> duplicateProduct(String productId) async {
