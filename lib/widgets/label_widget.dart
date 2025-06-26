@@ -33,7 +33,12 @@ class LabelWidget extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           border:
-              showBorder ? Border.all(color: Colors.black, width: 1.0) : null,
+              showBorder
+                  ? Border.all(
+                    color: const Color.fromARGB(255, 162, 162, 162),
+                    width: 1.0,
+                  )
+                  : null,
         ),
         child: Padding(
           padding: EdgeInsets.all(

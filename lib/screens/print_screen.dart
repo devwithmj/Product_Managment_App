@@ -517,7 +517,7 @@ class _PrintScreenState extends State<PrintScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Select Products: ${_selectedProducts.length} of ${_allProducts.length}',
+                'Selected: ${_selectedProducts.length} of ${_allProducts.length}',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               Row(
@@ -635,7 +635,9 @@ class _PrintScreenState extends State<PrintScreen> {
     }
 
     // First check if any products actually have the flag set
-    final hasUpdatedProducts = _selectedProducts.any((p) => p.priceUpdated);
+    final hasUpdatedProducts = _selectedProducts.any(
+      (p) => p.priceUpdated || !p.priceUpdated,
+    );
 
     if (!hasUpdatedProducts) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -680,15 +682,13 @@ class _PrintScreenState extends State<PrintScreen> {
 
     try {
       // Extract IDs of products with the flag set
-      final List<String> productIds =
-          _selectedProducts
-              .where((p) => p.priceUpdated)
-              .map((p) => p.id)
-              .toList();
+      final Map<String, bool> productIdAndFlagMap = {
+        for (var p in _selectedProducts) p.id: p.priceUpdated,
+      };
 
       // Use the optimized database method to reset flags
       final updatedCount = await _databaseService.resetPriceUpdatedFlags(
-        productIds,
+        productIdAndFlagMap,
       );
 
       // Show success message

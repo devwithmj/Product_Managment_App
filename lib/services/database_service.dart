@@ -885,20 +885,22 @@ class DatabaseService {
     }
   }
 
-  Future<int> resetPriceUpdatedFlags(List<String> productIds) async {
+  Future<int> resetPriceUpdatedFlags(Map<String, bool> products) async {
     try {
       await _ensureCacheLoaded();
       int updatedCount = 0;
-
+      print(products);
       // Try database first
       final db = await _getDatabaseIfPossible();
       if (db != null) {
         // Use transaction for efficiency with multiple updates
         await db.transaction((txn) async {
-          for (String id in productIds) {
-            int count = await txn.rawUpdate(
-              'UPDATE ${AppConfig.productsTable} SET priceUpdated = !priceUpdated WHERE id = ?',
-              [id],
+          for (MapEntry<String, bool> product in products.entries) {
+            int count = await txn.update(
+              AppConfig.productsTable,
+              {'priceUpdated': !product.value},
+              where: 'id = ?',
+              whereArgs: [product.key],
             );
             updatedCount += count;
           }
@@ -908,7 +910,7 @@ class DatabaseService {
       // Always update cache too
       for (int i = 0; i < _productsCache.length; i++) {
         final product = _productsCache[i];
-        if (productIds.contains(product.id) && product.priceUpdated) {
+        if (products.entries.contains(product.id) && product.priceUpdated) {
           _productsCache[i] = product.copyWith(priceUpdated: false);
           updatedCount++;
         }
@@ -925,7 +927,7 @@ class DatabaseService {
         int updatedCount = 0;
         for (int i = 0; i < _productsCache.length; i++) {
           final product = _productsCache[i];
-          if (productIds.contains(product.id) && product.priceUpdated) {
+          if (products.entries.contains(product.id) && product.priceUpdated) {
             _productsCache[i] = product.copyWith(priceUpdated: false);
             updatedCount++;
           }
@@ -933,7 +935,7 @@ class DatabaseService {
         await _saveProductsToBackup();
         return updatedCount;
       } catch (cacheError) {
-        print('Fatal error resetting price flags: $cacheError');
+        print('Fatal error resetting price flag: $cacheError');
         rethrow;
       }
     }
