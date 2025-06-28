@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:product_app/screens/barcode_scanner_screen.dart';
 import '../utils/constants.dart';
 
 class SearchBarWidget extends StatefulWidget {
@@ -104,21 +104,19 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
         return;
       }
 
-      String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-        '#FF6666', // Line color
-        'Cancel', // Cancel button text
-        true, // Show flash icon
-        ScanMode.BARCODE, // Scan mode
+      // Navigate to barcode scanner screen
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => BarcodeScannerScreen()),
       );
 
-      // If user canceled the scan, it returns -1
-      if (barcodeScanRes != '-1') {
+      if (result != null && result.isNotEmpty) {
         setState(() {
-          _searchController.text = barcodeScanRes;
+          _searchController.text = result;
         });
 
         // Trigger search with the scanned barcode
-        widget.onSearch(barcodeScanRes);
+        widget.onSearch(result);
       }
     } catch (e) {
       if (mounted) {

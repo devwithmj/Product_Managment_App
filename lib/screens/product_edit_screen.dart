@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:product_app/screens/barcode_scanner_screen.dart';
 import 'package:uuid/uuid.dart';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/product.dart';
 import '../services/database_service.dart';
@@ -142,12 +143,9 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
         });
         return;
       }
-
-      String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-        '#FF6666', // Line color
-        'Cancel', // Cancel button text
-        true, // Show flash icon
-        ScanMode.BARCODE, // Scan mode (QR, barcode, etc)
+      final barcodeScanRes = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => BarcodeScannerScreen()),
       );
 
       // If user canceled the scan, it returns -1
