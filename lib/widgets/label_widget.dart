@@ -25,7 +25,7 @@ class LabelWidget extends StatelessWidget {
     final double aspectRatio = labelSize.widthCm / labelSize.heightCm;
 
     // Special handling for 3-column layout
-    final bool isSmall3Column = labelSize.columnsPerPage == 4;
+    final bool isSmall3Column = labelSize.columnsPerPage == 3;
 
     return AspectRatio(
       aspectRatio: aspectRatio,

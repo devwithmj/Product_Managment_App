@@ -148,11 +148,31 @@ class LabelTemplates {
     priceFontSize: 26.0,
   );
 
+  // Avery 5160 Easy Peel Address Labels (2.625" x 1" = 6.67cm x 2.54cm)
+  // Standard 30 labels per sheet (3 columns x 10 rows)
+  static const LabelSize avery5160 = LabelSize(
+    name: "Avery 5160 (2.625\" x 1\")",
+    widthCm: 6.67, // 2.625 inches = 6.67 cm
+    heightCm: 2.54, // 1 inch = 2.54 cm
+    columnsPerPage: 3, // 3 labels per row
+    rowsPerPage: 10, // 10 rows of labels per page
+    horizontalSpacingCm: 0.3, // Slightly reduced spacing between columns
+    verticalSpacingCm: 0.0, // No spacing between rows (labels are touching)
+    pageMarginTopCm: 1.27, // 0.5" top margin
+    pageMarginLeftCm: 0.46, // Adjusted for proper fit
+    pageMarginRightCm: 0.46, // Adjusted for proper fit
+    pageMarginBottomCm: 1.27, // 0.5" bottom margin
+    englishFontSize: 9.0, // Smaller font for compact labels
+    persianFontSize: 11.0, // Slightly larger for Persian readability
+    priceFontSize: 14.0, // Compact price display
+  );
+
   // Add a list of all available label sizes
   static List<LabelSize> get allSizes => [
     standard,
     standardTight,
     smallTight,
     small3Column,
+    avery5160,
   ];
 }
