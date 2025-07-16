@@ -183,10 +183,10 @@ class _ImprovedHomeScreenState extends State<ImprovedHomeScreen> {
             label: 'Products',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.print), label: 'Print'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.qr_code_scanner),
-            label: 'Scan',
-          ),
+          // BottomNavigationBarItem(
+          //   icon: Icon(Icons.qr_code_scanner),
+          //   label: 'Scan',
+          // ),
         ],
       ),
     );
