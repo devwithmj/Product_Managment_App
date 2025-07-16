@@ -27,11 +27,14 @@ class LabelWidget extends StatelessWidget {
     // Special handling for 3-column layout
     final bool isSmall3Column = labelSize.columnsPerPage == 3;
 
+    // Check if this is Avery 5160 template for transparent background
+    final bool isAvery5160 = labelSize.name.contains("Avery 5160");
+
     return AspectRatio(
       aspectRatio: aspectRatio,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isAvery5160 ? Colors.transparent : Colors.white,
           border:
               showBorder
                   ? Border.all(

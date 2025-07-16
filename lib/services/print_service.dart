@@ -176,13 +176,19 @@ class PrintService {
     final centsFontSize =
         priceFontSize * 0.6; // Cents are 60% of main price size
 
+    // Check if this is Avery 5160 template for transparent background
+    final bool isAvery5160 = labelSize.name.contains("Avery 5160");
+
     return pw.Positioned(
       left: position.left,
       top: position.top,
       child: pw.Container(
         width: position.width,
         height: position.height,
-        decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.5)),
+        decoration:
+            isAvery5160
+                ? null // No decoration (transparent background) for Avery 5160
+                : pw.BoxDecoration(border: pw.Border.all(width: 0.5)),
         padding: const pw.EdgeInsets.all(4), // Added small padding
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.center,
@@ -262,13 +268,19 @@ class PrintService {
     String shortenedNameFa = product.nameFa;
     String shortenedNameEn = product.nameEn;
 
+    // Check if this is Avery 5160 template for transparent background
+    final bool isAvery5160 = labelSize.name.contains("Avery 5160");
+
     return pw.Positioned(
       left: position.left,
       top: position.top,
       child: pw.Container(
         width: position.width,
         height: position.height,
-        decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.5)),
+        decoration:
+            isAvery5160
+                ? null // No decoration (transparent background) for Avery 5160
+                : pw.BoxDecoration(border: pw.Border.all(width: 0.5)),
         padding: const pw.EdgeInsets.all(2), // Smaller padding for 3-column
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.center,

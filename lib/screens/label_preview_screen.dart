@@ -65,7 +65,12 @@ class LabelPreviewScreen extends StatelessWidget {
                         maxHeight: MediaQuery.of(context).size.height * 0.6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color:
+                            labelSize.name.contains("Avery 5160")
+                                ? Colors
+                                    .grey
+                                    .shade200 // Light background to show transparency
+                                : Colors.white,
                         boxShadow: [
                           BoxShadow(
                             color: Colors.grey.withOpacity(0.5),
