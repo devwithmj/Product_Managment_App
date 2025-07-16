@@ -27,7 +27,7 @@ class ProductItem extends StatelessWidget {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      color: isSelected ? AppColors.primary.withOpacity(0.1) : null,
+      color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : null,
       child: CheckboxListTile(
         value: isSelected,
         onChanged: (value) => onSelected(value ?? false),
@@ -100,11 +100,11 @@ class ProductItem extends StatelessWidget {
               onPressed: () => _showPriceHistory(context),
             ),
             _buildStoreIndicator(),
-            // Duplicate button (new)
+            // Fill Sheet / Duplicate button
             if (onDuplicate != null)
               IconButton(
-                icon: const Icon(Icons.copy, color: Colors.purple),
-                tooltip: 'Duplicate Product',
+                icon: const Icon(Icons.content_copy, color: Colors.blue),
+                tooltip: 'Fill Sheet with this product',
                 onPressed: onDuplicate,
               ),
             // Edit button

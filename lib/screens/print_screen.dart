@@ -139,38 +139,69 @@ class _PrintScreenState extends State<PrintScreen> {
     });
   }
 
-  Future<void> _generatePreview() async {
+  int _getUniqueProductCount() {
+    if (_selectedProducts.isEmpty) return 0;
+
+    // Count unique products by ID
+    final uniqueIds = <String>{};
+    for (final product in _selectedProducts) {
+      uniqueIds.add(product.id);
+    }
+    return uniqueIds.length;
+  }
+
+  Future<void> _fillAverySheet(Product product) async {
+    // Calculate how many labels fit on the selected template
+    final int labelsPerPage =
+        _selectedLabelSize.rowsPerPage * _selectedLabelSize.columnsPerPage;
+
+    setState(() {
+      // Fill the selection with the same product repeated for one full page
+      _selectedProducts = List.generate(labelsPerPage, (index) => product);
+      _pdfData = null; // Clear any generated preview
+    });
+
+    // Automatically print without notification
+    await _printLabelsDirectly();
+  }
+
+  Future<void> _fillAverySheetWithSelectedProducts() async {
     if (_selectedProducts.isEmpty) {
       _showErrorSnackBar('Please select at least one product');
       return;
     }
 
+    // Calculate how many labels fit on the selected template
+    final int labelsPerPage =
+        _selectedLabelSize.rowsPerPage * _selectedLabelSize.columnsPerPage;
+
+    // Get unique products from selection
+    final uniqueProducts = <Product>[];
+    final seenIds = <String>{};
+
+    for (final product in _selectedProducts) {
+      if (!seenIds.contains(product.id)) {
+        uniqueProducts.add(product);
+        seenIds.add(product.id);
+      }
+    }
+
     setState(() {
-      _isGeneratingPreview = true;
-      _pdfData = null;
-      _hasPrintError = false;
-      _errorMessage = '';
+      // Create separate pages for each unique product
+      _selectedProducts.clear();
+
+      for (final product in uniqueProducts) {
+        // Add one full page of this product
+        _selectedProducts.addAll(
+          List.generate(labelsPerPage, (index) => product),
+        );
+      }
+
+      _pdfData = null; // Clear any generated preview
     });
 
-    try {
-      final pdfBytes = await PrintService.generatePdf(
-        products: _selectedProducts,
-        labelSize: _selectedLabelSize,
-      );
-
-      setState(() {
-        _pdfData = pdfBytes;
-        _isGeneratingPreview = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isGeneratingPreview = false;
-        _hasPrintError = true;
-        _errorMessage = 'Error generating preview: $e';
-      });
-
-      _showErrorSnackBar('Error generating preview: $e');
-    }
+    // Automatically print without notification
+    await _printLabelsDirectly();
   }
 
   Future<void> _printLabels() async {
@@ -233,6 +264,28 @@ class _PrintScreenState extends State<PrintScreen> {
       });
 
       _showErrorSnackBar('Unexpected error during printing: $e');
+    }
+  }
+
+  Future<void> _printLabelsDirectly() async {
+    try {
+      if (_selectedProducts.isEmpty) {
+        return;
+      }
+
+      // Generate PDF directly without any UI feedback
+      final pdfBytes = await PrintService.generatePdf(
+        products: _selectedProducts,
+        labelSize: _selectedLabelSize,
+      );
+
+      // Print directly without showing the print dialog preview
+      await PrintService.printPdf(pdfBytes);
+    } catch (e) {
+      // Silent error handling - only show error if something critical happens
+      if (mounted) {
+        _showErrorSnackBar('Printing failed: $e');
+      }
     }
   }
 
@@ -513,28 +566,110 @@ class _PrintScreenState extends State<PrintScreen> {
         // Selection actions
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
             children: [
-              Text(
-                'Selected: ${_selectedProducts.length} of ${_allProducts.length}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  TextButton.icon(
-                    icon: const Icon(Icons.select_all),
-                    label: const Text('Select All'),
-                    onPressed: _selectAll,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Selected: ${_selectedProducts.length} labels',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      if (_selectedProducts.isNotEmpty)
+                        Text(
+                          '${_getUniqueProductCount()} unique products',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  TextButton.icon(
-                    icon: const Icon(Icons.deselect),
-                    label: const Text('Clear'),
-                    onPressed: _deselectAll,
+                  Row(
+                    children: [
+                      TextButton.icon(
+                        icon: const Icon(Icons.select_all),
+                        label: const Text('Select All'),
+                        onPressed: _selectAll,
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        icon: const Icon(Icons.deselect),
+                        label: const Text('Clear'),
+                        onPressed: _deselectAll,
+                      ),
+                    ],
                   ),
                 ],
               ),
+              // Fill Sheet button row
+              if (_selectedLabelSize.name.contains("Avery"))
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.content_copy),
+                              label: Text(
+                                _selectedProducts.length == 1
+                                    ? 'Fill ${_selectedLabelSize.name} Sheet'
+                                    : 'Fill ${_selectedLabelSize.name} Pages (${_getUniqueProductCount()} pages)',
+                              ),
+                              onPressed:
+                                  _selectedProducts.isEmpty
+                                      ? null
+                                      : _selectedProducts.length == 1
+                                      ? () async => await _fillAverySheet(
+                                        _selectedProducts.first,
+                                      )
+                                      : () async =>
+                                          await _fillAverySheetWithSelectedProducts(),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                            if (_selectedProducts.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 8.0,
+                                  top: 4.0,
+                                ),
+                                child: Text(
+                                  'Select products to fill pages',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                              )
+                            else if (_selectedProducts.length > 1)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 8.0,
+                                  top: 4.0,
+                                ),
+                                child: Text(
+                                  'Creates one full page per unique product',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),
@@ -556,6 +691,10 @@ class _PrintScreenState extends State<PrintScreen> {
                     (selected) => _toggleProductSelection(product, selected),
                 onEdit: () => _previewSingleLabel(product),
                 onDelete: () {}, // No delete functionality on this screen
+                onDuplicate:
+                    _selectedLabelSize.name.contains("Avery")
+                        ? () async => await _fillAverySheet(product)
+                        : null, // Show fill sheet button only for Avery templates
               );
             },
           ),
@@ -590,19 +729,26 @@ class _PrintScreenState extends State<PrintScreen> {
           ),
 
           const SizedBox(height: 12), // Add spacing
-          // Original Preview and Print buttons
+          // Fill Pages and Print buttons (removed Preview)
           Row(
             children: [
               Expanded(
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.preview),
-                  label: const Text(AppStrings.preview),
+                  icon: const Icon(Icons.content_copy),
+                  label: Text(
+                    _selectedLabelSize.name.contains("Avery")
+                        ? 'Fill ${_selectedLabelSize.name} Pages'
+                        : 'Fill Label Pages',
+                  ),
                   onPressed:
                       _selectedProducts.isEmpty || _isGeneratingPreview
                           ? null
-                          : _generatePreview,
+                          : () async =>
+                              await _fillAverySheetWithSelectedProducts(),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
                   ),
                 ),
               ),
@@ -692,12 +838,14 @@ class _PrintScreenState extends State<PrintScreen> {
       );
 
       // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Reset price flags for $updatedCount products'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Reset price flags for $updatedCount products'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
 
       // Reload the products list
       await _loadProducts();
