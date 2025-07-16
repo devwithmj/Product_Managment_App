@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'services/database_backup_service.dart'; // Import for navigator key
-import 'screens/home_screen.dart';
+import 'screens/improved_home_screen.dart';
 import 'utils/constants.dart';
 
 void main() async {
@@ -71,7 +71,7 @@ class MyApp extends StatelessWidget {
           bodySmall: const TextStyle(fontFamily: AppFonts.englishFont),
         ),
       ),
-      home: const HomeScreen(),
+      home: const ImprovedHomeScreen(),
     );
   }
 }
