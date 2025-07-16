@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/database_service.dart';
@@ -39,7 +40,9 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
-      print('Error checking database access: $e');
+      if (kDebugMode) {
+        print('Error checking database access: $e');
+      }
     }
   }
 
@@ -147,7 +150,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // If full repair requested or if we still have issues
       if (fullRepair || await _databaseService.isDatabaseReadOnly()) {
-        print('Performing full database repair');
+        if (kDebugMode) {
+          print('Performing full database repair');
+        }
         await _databaseService.recreateProductsTable();
       }
 

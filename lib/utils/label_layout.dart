@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/label_template.dart';
 import '../models/product.dart';
@@ -81,15 +82,17 @@ class LabelLayout {
     }
 
     // Debug info
-    print(
-      "Page dimensions: ${LabelSize.letterWidthPixels}px × ${LabelSize.letterHeightPixels}px",
-    );
-    print("Available area: ${availableWidth}px × ${availableHeight}px");
-    print("Label size: ${labelWidth}px × ${labelHeight}px");
-    print(
-      "Expected size: ${LabelSize.cmToPixels(labelSize.widthCm)}px × ${LabelSize.cmToPixels(labelSize.heightCm)}px",
-    );
+    if (kDebugMode) {
+      print(
+        "Page dimensions: ${LabelSize.letterWidthPixels}px × ${LabelSize.letterHeightPixels}px",
+      );
 
+      print("Available area: ${availableWidth}px × ${availableHeight}px");
+      print("Label size: ${labelWidth}px × ${labelHeight}px");
+      print(
+        "Expected size: ${LabelSize.cmToPixels(labelSize.widthCm)}px × ${LabelSize.cmToPixels(labelSize.heightCm)}px",
+      );
+    }
     return positions;
   }
 

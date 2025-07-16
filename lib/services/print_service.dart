@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
@@ -34,9 +35,13 @@ class PrintService {
       _vazirFontBold = pw.Font.ttf(boldFontData);
 
       _fontsLoaded = true;
-      print('Fonts loaded successfully');
+      if (kDebugMode) {
+        print('Fonts loaded successfully');
+      }
     } catch (e) {
-      print('Error loading fonts: $e');
+      if (kDebugMode) {
+        print('Error loading fonts: $e');
+      }
       // Fallback to default fonts
       _fontsLoaded = true;
     }
@@ -82,25 +87,28 @@ class PrintService {
 
     // Determine if we're using the 3-column layout
     final bool isThreeColumn = labelSize.columnsPerPage == 4;
-    final bool isBarcodeEnabled = false;
     // Organize products into pages
     final List<List<Product>> pages = LabelLayout.organizeProductsIntoPages(
       products,
       labelSize,
     );
+    if (kDebugMode) {
+      // Debug information
+      print("PDF page size: ${pageFormat.width}pt × ${pageFormat.height}pt");
+      print(
+        "Labels per page: ${labelSize.rowsPerPage * labelSize.columnsPerPage}",
+      );
+      print("Total pages: ${pages.length}");
 
-    // Debug information
-    print("PDF page size: ${pageFormat.width}pt × ${pageFormat.height}pt");
-    print(
-      "Labels per page: ${labelSize.rowsPerPage * labelSize.columnsPerPage}",
-    );
-    print("Total pages: ${pages.length}");
-    print("Label dimensions: ${labelSize.widthCm}cm × ${labelSize.heightCm}cm");
-    print(
-      "Font sizes - Persian: ${labelSize.persianFontSize}, English: ${labelSize.englishFontSize}, Price: ${labelSize.priceFontSize}",
-    );
-    print("Using ${isThreeColumn ? '3-column' : 'standard'} layout");
+      print(
+        "Label dimensions: ${labelSize.widthCm}cm × ${labelSize.heightCm}cm",
+      );
 
+      print(
+        "Font sizes - Persian: ${labelSize.persianFontSize}, English: ${labelSize.englishFontSize}, Price: ${labelSize.priceFontSize}",
+      );
+      print("Using ${isThreeColumn ? '3-column' : 'standard'} layout");
+    }
     // For each page of products
     for (int pageIndex = 0; pageIndex < pages.length; pageIndex++) {
       final pageProducts = pages[pageIndex];
@@ -130,9 +138,11 @@ class PrintService {
                 final position = positions[i];
 
                 // Debug information for label position
-                print(
-                  "Label $i position: left=${position.left}pt, top=${position.top}pt, width=${position.width}pt, height=${position.height}pt",
-                );
+                if (kDebugMode) {
+                  print(
+                    "Label $i position: left=${position.left}pt, top=${position.top}pt, width=${position.width}pt, height=${position.height}pt",
+                  );
+                }
 
                 // Different label layouts based on the column count
                 if (isThreeColumn) {
@@ -306,9 +316,13 @@ class PrintService {
       final output = await getTemporaryDirectory();
       final file = File('${output.path}/debug_labels.pdf');
       await file.writeAsBytes(await pdf.save());
-      print('Debug PDF saved to: ${file.path}');
+      if (kDebugMode) {
+        print('Debug PDF saved to: ${file.path}');
+      }
     } catch (e) {
-      print('Could not save debug PDF: $e');
+      if (kDebugMode) {
+        print('Could not save debug PDF: $e');
+      }
     }
   }
 

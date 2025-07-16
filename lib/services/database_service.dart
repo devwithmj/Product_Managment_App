@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -266,9 +267,13 @@ class DatabaseService {
       final file = File(_priceLogBackupFilePath);
       final jsonList = _priceLogsCache.map((log) => log.toMap()).toList();
       await file.writeAsString(jsonEncode(jsonList));
-      print('Saved ${_priceLogsCache.length} price logs to backup file');
+      if (kDebugMode) {
+        print('Saved ${_priceLogsCache.length} price logs to backup file');
+      }
     } catch (e) {
-      print('Error saving price logs to backup: $e');
+      if (kDebugMode) {
+        print('Error saving price logs to backup: $e');
+      }
     }
   }
 
@@ -297,7 +302,9 @@ class DatabaseService {
       return db ==
           null; // If we couldn't get a database, it's effectively read-only
     } catch (e) {
-      print('Database is read-only: $e');
+      if (kDebugMode) {
+        print('Database is read-only: $e');
+      }
       return true;
     }
   }
@@ -340,9 +347,11 @@ class DatabaseService {
             _priceLogsCache.add(priceLog);
             await _savePriceLogsToBackup();
 
-            print(
-              'Logged price change for ${product.nameEn}: ${oldProduct.price} -> ${product.price}',
-            );
+            if (kDebugMode) {
+              print(
+                'Logged price change for ${product.nameEn}: ${oldProduct.price} -> ${product.price}',
+              );
+            }
           }
 
           // Insert or update the product
@@ -373,9 +382,11 @@ class DatabaseService {
           _priceLogsCache.add(priceLog);
           await _savePriceLogsToBackup();
 
-          print(
-            'Logged price change for ${product.nameEn}: ${oldProduct.price} -> ${product.price}',
-          );
+          if (kDebugMode) {
+            print(
+              'Logged price change for ${product.nameEn}: ${oldProduct.price} -> ${product.price}',
+            );
+          }
         }
 
         // Update product in cache
@@ -384,9 +395,13 @@ class DatabaseService {
         await _saveProductsToBackup();
       }
 
-      print('Product saved: ${product.nameEn}');
+      if (kDebugMode) {
+        print('Product saved: ${product.nameEn}');
+      }
     } catch (e) {
-      print('Error saving product: $e');
+      if (kDebugMode) {
+        print('Error saving product: $e');
+      }
 
       // Fallback to cache-only approach
       try {
@@ -410,9 +425,13 @@ class DatabaseService {
         _productsCache.add(product);
         await _saveProductsToBackup();
 
-        print('Product saved to cache: ${product.nameEn}');
+        if (kDebugMode) {
+          print('Product saved to cache: ${product.nameEn}');
+        }
       } catch (cacheError) {
-        print('Fatal error saving product: $cacheError');
+        if (kDebugMode) {
+          print('Fatal error saving product: $cacheError');
+        }
         rethrow;
       }
     }
@@ -444,7 +463,9 @@ class DatabaseService {
         return List.from(_productsCache);
       }
     } catch (e) {
-      print('Error getting products: $e');
+      if (kDebugMode) {
+        print('Error getting products: $e');
+      }
 
       // Fall back to cache
       await _ensureCacheLoaded();
@@ -560,7 +581,9 @@ class DatabaseService {
         }).toList();
       }
     } catch (e) {
-      print('Error getting filtered products: $e');
+      if (kDebugMode) {
+        print('Error getting filtered products: $e');
+      }
 
       // Fall back to filtering in memory
       await _ensureCacheLoaded();
@@ -633,7 +656,9 @@ class DatabaseService {
         );
       }
     } catch (e) {
-      print('Error getting product by barcode: $e');
+      if (kDebugMode) {
+        print('Error getting product by barcode: $e');
+      }
 
       // Fall back to cache
       try {
@@ -673,7 +698,9 @@ class DatabaseService {
         );
       }
     } catch (e) {
-      print('Error getting product by ID: $e');
+      if (kDebugMode) {
+        print('Error getting product by ID: $e');
+      }
 
       // Fall back to cache
       try {
@@ -720,9 +747,13 @@ class DatabaseService {
       await _saveProductsToBackup();
       await _savePriceLogsToBackup();
 
-      print('Product deleted: $id');
+      if (kDebugMode) {
+        print('Product deleted: $id');
+      }
     } catch (e) {
-      print('Error deleting product: $e');
+      if (kDebugMode) {
+        print('Error deleting product: $e');
+      }
 
       // Fallback to cache
       try {
@@ -731,7 +762,9 @@ class DatabaseService {
         await _saveProductsToBackup();
         await _savePriceLogsToBackup();
       } catch (cacheError) {
-        print('Fatal error deleting product: $cacheError');
+        if (kDebugMode) {
+          print('Fatal error deleting product: $cacheError');
+        }
         rethrow;
       }
     }
@@ -761,9 +794,13 @@ class DatabaseService {
       await _saveProductsToBackup();
       await _savePriceLogsToBackup();
 
-      print('All products deleted');
+      if (kDebugMode) {
+        print('All products deleted');
+      }
     } catch (e) {
-      print('Error deleting all products: $e');
+      if (kDebugMode) {
+        print('Error deleting all products: $e');
+      }
 
       // Fallback to cache
       try {
@@ -772,7 +809,9 @@ class DatabaseService {
         await _saveProductsToBackup();
         await _savePriceLogsToBackup();
       } catch (cacheError) {
-        print('Fatal error deleting all products: $cacheError');
+        if (kDebugMode) {
+          print('Fatal error deleting all products: $cacheError');
+        }
         rethrow;
       }
     }
@@ -802,7 +841,9 @@ class DatabaseService {
           ..sort((a, b) => b.changeDate.compareTo(a.changeDate));
       }
     } catch (e) {
-      print('Error getting price logs: $e');
+      if (kDebugMode) {
+        print('Error getting price logs: $e');
+      }
 
       // Fall back to cache
       await _ensureCacheLoaded();
@@ -830,18 +871,24 @@ class DatabaseService {
       _priceLogsCache.add(log);
       await _savePriceLogsToBackup();
 
-      print(
-        'Added price log: ${log.productId} (${log.oldPrice} -> ${log.newPrice})',
-      );
+      if (kDebugMode) {
+        print(
+          'Added price log: ${log.productId} (${log.oldPrice} -> ${log.newPrice})',
+        );
+      }
     } catch (e) {
-      print('Error adding price log: $e');
+      if (kDebugMode) {
+        print('Error adding price log: $e');
+      }
 
       // Fallback to cache
       try {
         _priceLogsCache.add(log);
         await _savePriceLogsToBackup();
       } catch (cacheError) {
-        print('Fatal error adding price log: $cacheError');
+        if (kDebugMode) {
+          print('Fatal error adding price log: $cacheError');
+        }
         rethrow;
       }
     }
@@ -873,7 +920,9 @@ class DatabaseService {
           ..sort((a, b) => b.changeDate.compareTo(a.changeDate));
       }
     } catch (e) {
-      print('Error getting recent price logs: $e');
+      if (kDebugMode) {
+        print('Error getting recent price logs: $e');
+      }
 
       // Fall back to cache
       await _ensureCacheLoaded();
@@ -889,7 +938,9 @@ class DatabaseService {
     try {
       await _ensureCacheLoaded();
       int updatedCount = 0;
-      print(products);
+      if (kDebugMode) {
+        print(products);
+      }
       // Try database first
       final db = await _getDatabaseIfPossible();
       if (db != null) {
@@ -917,10 +968,14 @@ class DatabaseService {
       }
       await _saveProductsToBackup();
 
-      print('Reset price flags for $updatedCount products');
+      if (kDebugMode) {
+        print('Reset price flags for $updatedCount products');
+      }
       return updatedCount;
     } catch (e) {
-      print('Error resetting price flags: $e');
+      if (kDebugMode) {
+        print('Error resetting price flags: $e');
+      }
 
       // Fallback to cache
       try {
@@ -935,7 +990,9 @@ class DatabaseService {
         await _saveProductsToBackup();
         return updatedCount;
       } catch (cacheError) {
-        print('Fatal error resetting price flag: $cacheError');
+        if (kDebugMode) {
+          print('Fatal error resetting price flag: $cacheError');
+        }
         rethrow;
       }
     }
@@ -952,11 +1009,15 @@ class DatabaseService {
       try {
         existingProducts = await db!.query(AppConfig.productsTable);
         existingLogs = await db.query(AppConfig.priceLogsTable);
-        print(
-          'Backed up ${existingProducts.length} products and ${existingLogs.length} logs',
-        );
+        if (kDebugMode) {
+          print(
+            'Backed up ${existingProducts.length} products and ${existingLogs.length} logs',
+          );
+        }
       } catch (e) {
-        print('Error backing up data: $e');
+        if (kDebugMode) {
+          print('Error backing up data: $e');
+        }
       }
 
       // Drop and recreate tables
@@ -985,9 +1046,13 @@ class DatabaseService {
         }
       });
 
-      print('Successfully recreated database tables');
+      if (kDebugMode) {
+        print('Successfully recreated database tables');
+      }
     } catch (e) {
-      print('Error recreating database tables: $e');
+      if (kDebugMode) {
+        print('Error recreating database tables: $e');
+      }
       rethrow;
     }
   }
@@ -1101,7 +1166,9 @@ class DatabaseService {
         }).toList();
       }
     } catch (e) {
-      print('Error searching products: $e');
+      if (kDebugMode) {
+        print('Error searching products: $e');
+      }
 
       // Fallback to in-memory search
       await _ensureCacheLoaded();
@@ -1193,7 +1260,9 @@ class DatabaseService {
 
       return duplicatedProduct;
     } catch (e) {
-      print('Error duplicating product: $e');
+      if (kDebugMode) {
+        print('Error duplicating product: $e');
+      }
       rethrow;
     }
   }

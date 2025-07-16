@@ -1,6 +1,8 @@
 // This utility function can be added to your project to verify
 // that label dimensions actually fit on the page as intended
 
+import 'package:flutter/foundation.dart';
+
 import '../models/label_template.dart';
 
 class LabelArrangementHelper {
@@ -60,30 +62,33 @@ class LabelArrangementHelper {
   static void printValidationReport(LabelSize labelSize) {
     final report = validateLabelArrangement(labelSize);
 
-    print('----------------------------------------');
-    print('LABEL ARRANGEMENT VALIDATION: ${report['name']}');
-    print('----------------------------------------');
-    print('Dimensions: ${report['dimensions']}');
-    print('Layout: ${report['layout']}');
-    print('Labels per page: ${report['labelsPerPage']}');
-    print('');
-    print(
-      'Required width: ${report['totalWidthRequired'].toStringAsFixed(2)} cm (Letter: ${LabelSize.letterWidthCm} cm)',
-    );
-    print(
-      'Required height: ${report['totalHeightRequired'].toStringAsFixed(2)} cm (Letter: ${LabelSize.letterHeightCm} cm)',
-    );
-    print('');
-    print(
-      'Fits width: ${report['widthFits'] ? '✅' : '❌'} (${report['remainingWidthCm'].toStringAsFixed(2)} cm remaining)',
-    );
-    print(
-      'Fits height: ${report['heightFits'] ? '✅' : '❌'} (${report['remainingHeightCm'].toStringAsFixed(2)} cm remaining)',
-    );
-    print(
-      'OVERALL: ${report['fitsOnPage'] ? '✅ FITS ON PAGE' : '❌ DOES NOT FIT'}',
-    );
-    print('----------------------------------------');
+    if (kDebugMode) {
+      print('----------------------------------------');
+
+      print('LABEL ARRANGEMENT VALIDATION: ${report['name']}');
+      print('----------------------------------------');
+      print('Dimensions: ${report['dimensions']}');
+      print('Layout: ${report['layout']}');
+      print('Labels per page: ${report['labelsPerPage']}');
+      print('');
+      print(
+        'Required width: ${report['totalWidthRequired'].toStringAsFixed(2)} cm (Letter: ${LabelSize.letterWidthCm} cm)',
+      );
+      print(
+        'Required height: ${report['totalHeightRequired'].toStringAsFixed(2)} cm (Letter: ${LabelSize.letterHeightCm} cm)',
+      );
+      print('');
+      print(
+        'Fits width: ${report['widthFits'] ? '✅' : '❌'} (${report['remainingWidthCm'].toStringAsFixed(2)} cm remaining)',
+      );
+      print(
+        'Fits height: ${report['heightFits'] ? '✅' : '❌'} (${report['remainingHeightCm'].toStringAsFixed(2)} cm remaining)',
+      );
+      print(
+        'OVERALL: ${report['fitsOnPage'] ? '✅ FITS ON PAGE' : '❌ DOES NOT FIT'}',
+      );
+      print('----------------------------------------');
+    }
   }
 
   /// Validate all registered label templates
