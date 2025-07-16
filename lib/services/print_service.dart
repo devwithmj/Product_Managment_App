@@ -85,7 +85,6 @@ class PrintService {
     // Determine if we're using the 3-column layout
     final bool isThreeColumn = labelSize.columnsPerPage == 4;
     final bool isBarcodeEnabled = false;
-    ;
     // Organize products into pages
     final List<List<Product>> pages = LabelLayout.organizeProductsIntoPages(
       products,

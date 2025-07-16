@@ -944,14 +944,14 @@ class DatabaseService {
   // Nuclear option - recreate tables
   Future<void> recreateProductsTable() async {
     try {
-      final db = await _database;
+      final db = _database;
 
       // Backup data if possible
       List<Map<String, dynamic>> existingProducts = [];
       List<Map<String, dynamic>> existingLogs = [];
       try {
         existingProducts = await db!.query(AppConfig.productsTable);
-        existingLogs = await db!.query(AppConfig.priceLogsTable);
+        existingLogs = await db.query(AppConfig.priceLogsTable);
         print(
           'Backed up ${existingProducts.length} products and ${existingLogs.length} logs',
         );
@@ -1166,12 +1166,10 @@ class DatabaseService {
       }
 
       // If not found in database, try cache
-      if (originalProduct == null) {
-        originalProduct = _productsCache.firstWhere(
-          (p) => p.id == productId,
-          orElse: () => throw Exception('Product not found'),
-        );
-      }
+      originalProduct ??= _productsCache.firstWhere(
+        (p) => p.id == productId,
+        orElse: () => throw Exception('Product not found'),
+      );
 
       // Create a duplicate with a new ID and "Copy" in the name
       final duplicatedProduct = Product(

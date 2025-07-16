@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:product_app/screens/barcode_scanner_screen.dart';
 import 'package:uuid/uuid.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/product.dart';
 import '../services/database_service.dart';
@@ -13,7 +12,7 @@ class ProductEditScreen extends StatefulWidget {
 
   // If product is null, we're adding a new product
   // If product is provided, we're editing an existing product
-  const ProductEditScreen({Key? key, this.product}) : super(key: key);
+  const ProductEditScreen({super.key, this.product});
 
   @override
   _ProductEditScreenState createState() => _ProductEditScreenState();
@@ -324,7 +323,7 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          Container(
+                          SizedBox(
                             height: 60,
                             child: ElevatedButton.icon(
                               onPressed: _isScanning ? null : _scanBarcode,

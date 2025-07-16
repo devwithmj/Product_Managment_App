@@ -39,7 +39,7 @@ class NumberFormatter {
 
     // Reassemble the number
     if (decimalPart.isNotEmpty) {
-      result += '.' + decimalPart;
+      result += '.$decimalPart';
     }
 
     // Convert to Persian digits

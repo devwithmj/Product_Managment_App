@@ -7,7 +7,7 @@ import '../widgets/product_item.dart';
 import 'product_edit_screen.dart';
 
 class ProductListScreen extends StatefulWidget {
-  const ProductListScreen({Key? key}) : super(key: key);
+  const ProductListScreen({super.key});
 
   @override
   _ProductListScreenState createState() => _ProductListScreenState();
@@ -206,8 +206,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addNewProduct,
-        child: const Icon(Icons.add),
         tooltip: AppStrings.addProduct,
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -262,7 +262,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           value: location,
                           child: Text(locationName),
                         );
-                      }).toList(),
+                      }),
                     ],
                     onChanged: (value) {
                       setState(() {

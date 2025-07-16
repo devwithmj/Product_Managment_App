@@ -9,10 +9,10 @@ class LabelPreviewScreen extends StatelessWidget {
   final LabelSize labelSize;
 
   const LabelPreviewScreen({
-    Key? key,
+    super.key,
     required this.product,
     required this.labelSize,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -56,8 +56,8 @@ class Product {
     this.barcode = '',
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) : this.createdAt = createdAt ?? DateTime.now(),
-       this.updatedAt = updatedAt ?? DateTime.now();
+  }) : createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   // Create a copy of the product with optional new values
   Product copyWith({
@@ -80,7 +80,7 @@ class Product {
             : (priceUpdated ?? this.priceUpdated);
 
     return Product(
-      id: this.id,
+      id: id,
       nameEn: nameEn ?? this.nameEn,
       nameFa: nameFa ?? this.nameFa,
       brandEn: brandEn ?? this.brandEn,
@@ -91,7 +91,7 @@ class Product {
       priceUpdated: isPriceUpdated,
       storeLocation: storeLocation ?? this.storeLocation,
       barcode: barcode ?? this.barcode,
-      createdAt: this.createdAt,
+      createdAt: createdAt,
       updatedAt: updatedAt ?? DateTime.now(),
     );
   }

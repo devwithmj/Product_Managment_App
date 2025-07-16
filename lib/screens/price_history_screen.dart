@@ -8,7 +8,7 @@ import '../utils/constants.dart';
 class PriceHistoryScreen extends StatefulWidget {
   final Product product;
 
-  const PriceHistoryScreen({Key? key, required this.product}) : super(key: key);
+  const PriceHistoryScreen({super.key, required this.product});
 
   @override
   _PriceHistoryScreenState createState() => _PriceHistoryScreenState();

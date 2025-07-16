@@ -10,7 +10,7 @@ import '../widgets/product_item.dart';
 import 'label_preview_screen.dart';
 
 class PrintScreen extends StatefulWidget {
-  const PrintScreen({Key? key}) : super(key: key);
+  const PrintScreen({super.key});
 
   @override
   _PrintScreenState createState() => _PrintScreenState();
@@ -417,7 +417,7 @@ class _PrintScreenState extends State<PrintScreen> {
                           value: location,
                           child: Text(locationName),
                         );
-                      }).toList(),
+                      }),
                     ],
                     onChanged: (value) {
                       setState(() {
