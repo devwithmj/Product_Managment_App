@@ -12,12 +12,12 @@ class LabelWidget extends StatelessWidget {
   final bool showBarcode;
 
   const LabelWidget({
-    Key? key,
+    super.key,
     required this.product,
     required this.labelSize,
     this.showBorder = true,
     this.showBarcode = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

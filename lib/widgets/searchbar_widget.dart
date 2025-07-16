@@ -11,13 +11,13 @@ class SearchBarWidget extends StatefulWidget {
   final VoidCallback? onFilterTap;
 
   const SearchBarWidget({
-    Key? key,
+    super.key,
     required this.onSearch,
     required this.onClear,
     this.hintText = 'Search by name or barcode',
     this.showFilter = false,
     this.onFilterTap,
-  }) : super(key: key);
+  });
 
   @override
   State<SearchBarWidget> createState() => _SearchBarWidgetState();

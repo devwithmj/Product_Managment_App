@@ -13,14 +13,14 @@ class ProductItem extends StatelessWidget {
   final VoidCallback? onDuplicate; // New callback for duplicate action
 
   const ProductItem({
-    Key? key,
+    super.key,
     required this.product,
     required this.isSelected,
     required this.onSelected,
     required this.onEdit,
     required this.onDelete,
     this.onDuplicate, // Optional parameter for duplicate action
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

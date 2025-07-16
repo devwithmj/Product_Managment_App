@@ -10,11 +10,11 @@ class PagePreview extends StatelessWidget {
   final double scale;
 
   const PagePreview({
-    Key? key,
+    super.key,
     required this.products,
     required this.labelSize,
     this.scale = 0.5,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
