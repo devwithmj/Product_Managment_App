@@ -11,6 +11,7 @@ class ProductItem extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback? onDuplicate; // New callback for duplicate action
+  final VoidCallback? onPrint; // New callback for single print action
 
   const ProductItem({
     super.key,
@@ -20,6 +21,7 @@ class ProductItem extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     this.onDuplicate, // Optional parameter for duplicate action
+    this.onPrint, // Optional parameter for single print action
   });
 
   @override
@@ -100,6 +102,13 @@ class ProductItem extends StatelessWidget {
               onPressed: () => _showPriceHistory(context),
             ),
             _buildStoreIndicator(),
+            // Print single label button (for thermal printing)
+            if (onPrint != null)
+              IconButton(
+                icon: const Icon(Icons.local_printshop, color: Colors.orange),
+                tooltip: 'Print Single Label',
+                onPressed: onPrint,
+              ),
             // Fill Sheet / Duplicate button
             if (onDuplicate != null)
               IconButton(

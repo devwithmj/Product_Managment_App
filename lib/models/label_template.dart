@@ -167,6 +167,25 @@ class LabelTemplates {
     priceFontSize: 14.0, // Compact price display
   );
 
+  // Thermal Printer Label (7.9cm width - TSP100III compatible)
+  // Single label printing optimized for thermal printers
+  static const LabelSize thermal = LabelSize(
+    name: "Thermal (7.9cm)",
+    widthCm: 7.9, // Full thermal printer width
+    heightCm: 3.0, // Standard height for product labels
+    columnsPerPage: 1, // Single label per "page" for thermal
+    rowsPerPage: 1, // One label at a time
+    horizontalSpacingCm: 0.0, // No spacing needed for thermal
+    verticalSpacingCm: 0.0, // No spacing needed for thermal
+    pageMarginTopCm: 0.2, // Minimal margin for thermal
+    pageMarginLeftCm: 0.2, // Minimal margin for thermal
+    pageMarginRightCm: 0.2, // Minimal margin for thermal
+    pageMarginBottomCm: 0.2, // Minimal margin for thermal
+    englishFontSize: 12.0, // Optimal for thermal printing
+    persianFontSize: 16.0, // Slightly larger for Persian readability
+    priceFontSize: 22.0, // Prominent price display
+  );
+
   // Add a list of all available label sizes
   static List<LabelSize> get allSizes => [
     standard,
@@ -174,5 +193,14 @@ class LabelTemplates {
     smallTight,
     small3Column,
     avery5160,
+    thermal,
   ];
+
+  // Thermal printer specific templates
+  static List<LabelSize> get thermalSizes => [thermal];
+
+  // Check if a label size is for thermal printing
+  static bool isThermalSize(LabelSize labelSize) {
+    return labelSize.name.toLowerCase().contains('thermal');
+  }
 }

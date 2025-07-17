@@ -5,9 +5,11 @@ import '../models/product.dart';
 import '../models/label_template.dart';
 import '../services/database_service.dart';
 import '../services/print_service.dart';
+import '../services/thermal_print_service.dart';
 import '../utils/constants.dart';
 import '../widgets/product_item.dart';
 import 'label_preview_screen.dart';
+import 'thermal_printer_settings_screen.dart';
 
 class PrintScreen extends StatefulWidget {
   const PrintScreen({super.key});
@@ -33,6 +35,9 @@ class _PrintScreenState extends State<PrintScreen> {
 
   // Selected label template
   LabelSize _selectedLabelSize = LabelTemplates.standard;
+
+  // Print method selection
+  bool _useThermalPrinter = false;
 
   // Generated PDF data
   Uint8List? _pdfData;
@@ -109,6 +114,12 @@ class _PrintScreenState extends State<PrintScreen> {
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 
@@ -216,6 +227,13 @@ class _PrintScreenState extends State<PrintScreen> {
         return;
       }
 
+      // Check if using thermal printer
+      if (_useThermalPrinter) {
+        await _printWithThermalPrinter();
+        return;
+      }
+
+      // Continue with PDF printing for non-thermal
       if (_pdfData == null) {
         setState(() {
           _isGeneratingPreview = true;
@@ -273,7 +291,13 @@ class _PrintScreenState extends State<PrintScreen> {
         return;
       }
 
-      // Generate PDF directly without any UI feedback
+      // Check if using thermal printer
+      if (_useThermalPrinter) {
+        await _printWithThermalPrinter();
+        return;
+      }
+
+      // Generate PDF directly without any UI feedback for non-thermal
       final pdfBytes = await PrintService.generatePdf(
         products: _selectedProducts,
         labelSize: _selectedLabelSize,
@@ -286,6 +310,73 @@ class _PrintScreenState extends State<PrintScreen> {
       if (mounted) {
         _showErrorSnackBar('Printing failed: $e');
       }
+    }
+  }
+
+  // Thermal printer methods
+  Future<void> _printWithThermalPrinter() async {
+    if (!ThermalPrintService.isConnected) {
+      _showErrorSnackBar(
+        'Thermal printer not connected. Please check settings.',
+      );
+      return;
+    }
+
+    setState(() {
+      _isGeneratingPreview = true;
+    });
+
+    try {
+      final success = await ThermalPrintService.printMultipleLabels(
+        _selectedProducts,
+        _selectedLabelSize,
+      );
+
+      setState(() {
+        _isGeneratingPreview = false;
+      });
+
+      if (success) {
+        _showSuccessSnackBar(
+          '${_selectedProducts.length} labels printed successfully!',
+        );
+      } else {
+        _showErrorSnackBar(
+          'Failed to print labels. Check thermal printer connection.',
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isGeneratingPreview = false;
+      });
+      _showErrorSnackBar('Thermal printing error: $e');
+    }
+  }
+
+  // Print single label with thermal printer
+  Future<void> _printSingleThermalLabel(Product product) async {
+    if (!ThermalPrintService.isConnected) {
+      _showErrorSnackBar(
+        'Thermal printer not connected. Please check settings.',
+      );
+      return;
+    }
+
+    try {
+      final success = await ThermalPrintService.printSingleLabel(
+        product,
+        _selectedLabelSize,
+      );
+
+      if (success) {
+        _showSuccessSnackBar('Label printed successfully!');
+      } else {
+        _showErrorSnackBar(
+          'Failed to print label. Check thermal printer connection.',
+        );
+      }
+    } catch (e) {
+      _showErrorSnackBar('Thermal printing error: $e');
     }
   }
 
@@ -392,6 +483,78 @@ class _PrintScreenState extends State<PrintScreen> {
             ),
             const SizedBox(height: 12),
 
+            // Print method selection
+            Row(
+              children: [
+                const Text(
+                  'Print Method:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: RadioListTile<bool>(
+                          title: const Text('PDF Printer'),
+                          value: false,
+                          groupValue: _useThermalPrinter,
+                          onChanged: (value) {
+                            setState(() {
+                              _useThermalPrinter = value!;
+                              // Reset label size based on print method
+                              if (!_useThermalPrinter &&
+                                  LabelTemplates.isThermalSize(
+                                    _selectedLabelSize,
+                                  )) {
+                                _selectedLabelSize = LabelTemplates.standard;
+                              }
+                              _pdfData = null;
+                            });
+                          },
+                          dense: true,
+                        ),
+                      ),
+                      Expanded(
+                        child: RadioListTile<bool>(
+                          title: const Text('Thermal'),
+                          value: true,
+                          groupValue: _useThermalPrinter,
+                          onChanged: (value) {
+                            setState(() {
+                              _useThermalPrinter = value!;
+                              // Switch to thermal label size
+                              if (_useThermalPrinter) {
+                                _selectedLabelSize = LabelTemplates.thermal;
+                              }
+                              _pdfData = null;
+                            });
+                          },
+                          dense: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_useThermalPrinter)
+                  IconButton(
+                    icon: const Icon(Icons.settings),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => const ThermalPrinterSettingsScreen(),
+                        ),
+                      );
+                    },
+                    tooltip: 'Thermal Printer Settings',
+                  ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
             // Label size selection
             Row(
               children: [
@@ -411,12 +574,21 @@ class _PrintScreenState extends State<PrintScreen> {
                     ),
                     value: _selectedLabelSize,
                     items:
-                        LabelTemplates.allSizes.map((size) {
-                          return DropdownMenuItem<LabelSize>(
-                            value: size,
-                            child: Text(size.name),
-                          );
-                        }).toList(),
+                        (_useThermalPrinter
+                                ? LabelTemplates.thermalSizes
+                                : LabelTemplates.allSizes
+                                    .where(
+                                      (size) =>
+                                          !LabelTemplates.isThermalSize(size),
+                                    )
+                                    .toList())
+                            .map((size) {
+                              return DropdownMenuItem<LabelSize>(
+                                value: size,
+                                child: Text(size.name),
+                              );
+                            })
+                            .toList(),
                     onChanged: (LabelSize? value) {
                       if (value != null) {
                         setState(() {
@@ -429,6 +601,50 @@ class _PrintScreenState extends State<PrintScreen> {
                 ),
               ],
             ),
+
+            if (_useThermalPrinter) ...[
+              const SizedBox(height: 12),
+              // Thermal printer status
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color:
+                      ThermalPrintService.isConnected
+                          ? Colors.green.withOpacity(0.1)
+                          : Colors.orange.withOpacity(0.1),
+                  border: Border.all(
+                    color:
+                        ThermalPrintService.isConnected
+                            ? Colors.green
+                            : Colors.orange,
+                  ),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      ThermalPrintService.isConnected
+                          ? Icons.check_circle
+                          : Icons.warning,
+                      color:
+                          ThermalPrintService.isConnected
+                              ? Colors.green
+                              : Colors.orange,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        ThermalPrintService.isConnected
+                            ? 'Thermal printer connected'
+                            : 'Thermal printer not connected - Go to settings',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
 
             const SizedBox(height: 12),
 
@@ -695,6 +911,10 @@ class _PrintScreenState extends State<PrintScreen> {
                     _selectedLabelSize.name.contains("Avery")
                         ? () async => await _fillAverySheet(product)
                         : null, // Show fill sheet button only for Avery templates
+                onPrint:
+                    _useThermalPrinter && ThermalPrintService.isConnected
+                        ? () async => await _printSingleThermalLabel(product)
+                        : null, // Show print button only for thermal printing
               );
             },
           ),
