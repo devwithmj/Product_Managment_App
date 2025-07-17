@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/database_service.dart';
+import '../models/product.dart';
 import 'product_list_screen.dart';
 import 'print_screen.dart';
 import 'barcode_scanner_screen.dart';
@@ -266,12 +267,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
               'Scan Barcode',
               Icons.qr_code_scanner,
               Colors.green,
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const BarcodeScannerScreen(),
-                ),
-              ),
+              () async {
+                final result = await Navigator.push<String?>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const BarcodeScannerScreen(),
+                  ),
+                );
+                if (result != null && result.isNotEmpty) {
+                  // Navigate to product edit screen with scanned barcode
+                  if (mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => ProductEditScreen(
+                              product: Product(
+                                id: '',
+                                nameEn: '',
+                                nameFa: '',
+                                brandEn: '',
+                                brandFa: '',
+                                sizeValue: '',
+                                unitType: UnitType.piece,
+                                price: 0.0,
+                                barcode: result,
+                                storeLocation: StoreLocation.both,
+                                createdAt: DateTime.now(),
+                                updatedAt: DateTime.now(),
+                                priceUpdated: false,
+                              ),
+                            ),
+                      ),
+                    );
+                  }
+                }
+              },
             ),
             _buildActionCard(
               'Print Labels',

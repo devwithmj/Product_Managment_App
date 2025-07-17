@@ -114,26 +114,12 @@ class _ImprovedHomeScreenState extends State<ImprovedHomeScreen> {
         actions: [
           // Quick scan button
           if (_currentIndex != 3) // Don't show on scanner screen
+            // Notification/Info button
             IconButton(
-              icon: const Icon(Icons.qr_code_scanner),
-              tooltip: 'Quick Scan',
-              onPressed: () {
-                setState(() {
-                  _currentIndex = 3;
-                });
-                _pageController.animateToPage(
-                  3,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                );
-              },
+              icon: const Icon(Icons.info_outline),
+              tooltip: 'App Info',
+              onPressed: () => _showAppInfo(),
             ),
-          // Notification/Info button
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            tooltip: 'App Info',
-            onPressed: () => _showAppInfo(),
-          ),
         ],
       ),
       drawer: _buildDrawer(),
