@@ -151,7 +151,7 @@ class LabelTemplates {
   // Avery 5160 Easy Peel Address Labels (2.625" x 1" = 6.67cm x 2.54cm)
   // Standard 30 labels per sheet (3 columns x 10 rows)
   static const LabelSize avery5160 = LabelSize(
-    name: "Avery 5160 (2.625\" x 1\")",
+    name: "Avery",
     widthCm: 6.67, // 2.625 inches = 6.67 cm
     heightCm: 2.54, // 1 inch = 2.54 cm
     columnsPerPage: 3, // 3 labels per row

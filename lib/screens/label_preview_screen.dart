@@ -66,14 +66,14 @@ class LabelPreviewScreen extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color:
-                            labelSize.name.contains("Avery 5160")
+                            labelSize.name.toLowerCase().contains("avery")
                                 ? Colors
                                     .grey
                                     .shade200 // Light background to show transparency
                                 : Colors.white,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.5),
+                            color: Colors.white,
                             spreadRadius: 2,
                             blurRadius: 7,
                             offset: const Offset(0, 3),
