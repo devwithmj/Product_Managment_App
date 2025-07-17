@@ -102,7 +102,7 @@ class ProductItem extends StatelessWidget {
               onPressed: () => _showPriceHistory(context),
             ),
             _buildStoreIndicator(),
-            // Print single label button (for thermal printing)
+            // Print single label button
             if (onPrint != null)
               IconButton(
                 icon: const Icon(Icons.local_printshop, color: Colors.orange),
