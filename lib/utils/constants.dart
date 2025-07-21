@@ -53,7 +53,8 @@ class AppStrings {
 class AppConfig {
   // Database config
   static const String databaseName = 'label_printing.db';
-  static const int databaseVersion = 4; // Increased to handle new tables
+  static const int databaseVersion =
+      6; // Increased to handle barcode as PLU and label options
   static const String productsTable = 'products';
   static const String priceLogsTable = 'price_logs';
 

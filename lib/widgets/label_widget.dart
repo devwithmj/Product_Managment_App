@@ -60,17 +60,23 @@ class LabelWidget extends StatelessWidget {
   }
 
   Widget _buildStandardLabel() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Top: Persian product name (right-to-left)
+    List<Widget> children = [];
+
+    // Top: Persian product name (right-to-left) - if enabled
+    if (product.labelOptions.showPersianName) {
+      children.add(
         Expanded(
           flex: 2,
           child: Directionality(
             textDirection: TextDirection.rtl,
             child: AutoSizeText(
-              product.fullNameFa,
+              product.labelOptions.showBrand && product.labelOptions.showSize
+                  ? product.fullNameFa
+                  : product.labelOptions.showBrand
+                  ? '${product.nameFa} ${product.brandFa}'
+                  : product.labelOptions.showSize
+                  ? '${product.nameFa} (${product.persianSize})'
+                  : product.nameFa,
               style: TextStyle(
                 fontFamily: AppFonts.persianFont,
                 fontWeight: FontWeight.bold,
@@ -84,12 +90,22 @@ class LabelWidget extends StatelessWidget {
             ),
           ),
         ),
+      );
+    }
 
-        // Middle: Full product name and info in English
+    // Middle: Full product name and info in English - if enabled
+    if (product.labelOptions.showEnglishName) {
+      children.add(
         Expanded(
           flex: 1,
           child: AutoSizeText(
-            product.fullNameEn,
+            product.labelOptions.showBrand && product.labelOptions.showSize
+                ? product.fullNameEn
+                : product.labelOptions.showBrand
+                ? '${product.brandEn} ${product.nameEn}'
+                : product.labelOptions.showSize
+                ? '${product.nameEn} (${product.size})'
+                : product.nameEn,
             style: TextStyle(
               fontFamily: AppFonts.englishFont,
               fontSize: labelSize.englishFontSize,
@@ -101,8 +117,12 @@ class LabelWidget extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
+      );
+    }
 
-        // Bottom: Price with specific formatting
+    // Price - if enabled
+    if (product.labelOptions.showPrice) {
+      children.add(
         Expanded(
           flex: 2,
           child: Row(
@@ -143,39 +163,71 @@ class LabelWidget extends StatelessWidget {
             ],
           ),
         ),
+      );
+    }
 
-        // Optional barcode
-        if (showBarcode && product.barcode.isNotEmpty)
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4.0),
-              child: BarcodeWidget(
-                barcode: Barcode.code128(),
-                data: product.barcode,
-                drawText: true,
-                height: 30,
-                style: TextStyle(fontSize: labelSize.englishFontSize * 0.5),
-              ),
+    // PLU (barcode formatted as PLU) - if enabled and available
+    if (product.labelOptions.showBarcode && product.barcode.isNotEmpty) {
+      children.add(
+        Expanded(
+          flex: 1,
+          child: Text(
+            "PLU# ${product.barcode}",
+            style: TextStyle(
+              fontFamily: AppFonts.englishFont,
+              fontSize: labelSize.englishFontSize,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    // Optional barcode
+    if (showBarcode && product.barcode.isNotEmpty) {
+      children.add(
+        Expanded(
+          flex: 2,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 4.0),
+            child: BarcodeWidget(
+              barcode: Barcode.code128(),
+              data: product.barcode,
+              drawText: true,
+              height: 30,
+              style: TextStyle(fontSize: labelSize.englishFontSize * 0.5),
             ),
           ),
-      ],
+        ),
+      );
+    }
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: children,
     );
   }
 
   // Compact version optimized for 3-column layout
   Widget _buildCompactLabel() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Persian product name (RTL) - more compact
+    List<Widget> children = [];
+
+    // Persian product name (RTL) - if enabled
+    if (product.labelOptions.showPersianName) {
+      children.add(
         Expanded(
           flex: 1,
           child: Directionality(
             textDirection: TextDirection.rtl,
             child: AutoSizeText(
-              product.nameFa,
+              product.labelOptions.showBrand && product.labelOptions.showSize
+                  ? product.fullNameFa
+                  : product.labelOptions.showBrand
+                  ? '${product.nameFa} ${product.brandFa}'
+                  : product.labelOptions.showSize
+                  ? '${product.nameFa} (${product.persianSize})'
+                  : product.nameFa,
               style: TextStyle(
                 fontFamily: AppFonts.persianFont,
                 fontWeight: FontWeight.bold,
@@ -188,12 +240,22 @@ class LabelWidget extends StatelessWidget {
             ),
           ),
         ),
+      );
+    }
 
-        // English product name - very brief
+    // English product name - if enabled
+    if (product.labelOptions.showEnglishName) {
+      children.add(
         Expanded(
           flex: 1,
           child: AutoSizeText(
-            product.nameEn, // Shorten name for compact display
+            product.labelOptions.showBrand && product.labelOptions.showSize
+                ? product.fullNameEn
+                : product.labelOptions.showBrand
+                ? '${product.brandEn} ${product.nameEn}'
+                : product.labelOptions.showSize
+                ? '${product.nameEn} (${product.size})'
+                : product.nameEn,
             style: TextStyle(
               fontFamily: AppFonts.englishFont,
               fontSize: labelSize.englishFontSize,
@@ -204,8 +266,12 @@ class LabelWidget extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
+      );
+    }
 
-        // Price with compact formatting
+    // Price - if enabled
+    if (product.labelOptions.showPrice) {
+      children.add(
         Expanded(
           flex: 2,
           child: Row(
@@ -224,7 +290,30 @@ class LabelWidget extends StatelessWidget {
             ],
           ),
         ),
-      ],
+      );
+    }
+
+    // PLU (barcode formatted as PLU) - if enabled and available
+    if (product.labelOptions.showBarcode && product.barcode.isNotEmpty) {
+      children.add(
+        Expanded(
+          flex: 1,
+          child: Text(
+            "PLU# ${product.barcode}",
+            style: TextStyle(
+              fontFamily: AppFonts.englishFont,
+              fontSize: labelSize.englishFontSize,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: children,
     );
   }
 

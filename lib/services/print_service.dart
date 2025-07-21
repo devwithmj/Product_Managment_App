@@ -52,6 +52,15 @@ class PrintService {
     required List<Product> products,
     required LabelSize labelSize,
   }) async {
+    // Debug: Print product information
+    print('DEBUG: Generating PDF for ${products.length} products');
+    for (int i = 0; i < products.length; i++) {
+      final product = products[i];
+      print(
+        'DEBUG: Product $i - name: ${product.nameEn}, barcode: "${product.barcode}", showBarcode: ${product.labelOptions.showBarcode}',
+      );
+    }
+
     // Load fonts first
     await _loadFonts();
 
@@ -190,59 +199,83 @@ class PrintService {
           crossAxisAlignment: pw.CrossAxisAlignment.center,
           mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
           children: [
-            // Persian product name in RTL
-            pw.Directionality(
-              textDirection: pw.TextDirection.rtl,
-              child: pw.Text(
-                product.fullNameFa,
-                style: pw.TextStyle(
-                  font: _vazirFontBold,
-                  fontSize: persianFontSize,
-                  fontWeight: pw.FontWeight.bold,
+            // Persian product name in RTL - if enabled
+            if (product.labelOptions.showPersianName)
+              pw.Directionality(
+                textDirection: pw.TextDirection.rtl,
+                child: pw.Text(
+                  product.labelOptions.showBrand &&
+                          product.labelOptions.showSize
+                      ? product.fullNameFa
+                      : product.labelOptions.showBrand
+                      ? '${product.nameFa} ${product.brandFa}'
+                      : product.labelOptions.showSize
+                      ? '${product.nameFa} (${product.persianSize})'
+                      : product.nameFa,
+                  style: pw.TextStyle(
+                    font: _vazirFontBold,
+                    fontSize: persianFontSize,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                  textAlign: pw.TextAlign.center,
                 ),
+              ),
+
+            // Full product info in English - if enabled
+            if (product.labelOptions.showEnglishName)
+              pw.Text(
+                product.labelOptions.showBrand && product.labelOptions.showSize
+                    ? product.fullNameEn
+                    : product.labelOptions.showBrand
+                    ? '${product.brandEn} ${product.nameEn}'
+                    : product.labelOptions.showSize
+                    ? '${product.nameEn} (${product.size})'
+                    : product.nameEn,
+                style: pw.TextStyle(fontSize: englishFontSize),
                 textAlign: pw.TextAlign.center,
               ),
-            ),
 
-            // Full product info in English
-            pw.Text(
-              product.fullNameEn,
-              style: pw.TextStyle(fontSize: englishFontSize),
-              textAlign: pw.TextAlign.center,
-            ),
-
-            // Price with correct formatting
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.center,
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                // Dollar sign and main price
-                pw.Text(
-                  "\$${product.price.floor()}.",
-                  style: pw.TextStyle(
-                    fontSize: priceFontSize,
-                    fontWeight: pw.FontWeight.bold,
+            // Price with correct formatting - if enabled
+            if (product.labelOptions.showPrice)
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.center,
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  // Dollar sign and main price
+                  pw.Text(
+                    "\$${product.price.floor()}.",
+                    style: pw.TextStyle(
+                      fontSize: priceFontSize,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
                   ),
-                ),
 
-                // Cents
-                pw.Text(
-                  _getCentsFormatted(product.price),
-                  style: pw.TextStyle(
-                    fontSize: centsFontSize,
-                    fontWeight: pw.FontWeight.bold,
+                  // Cents
+                  pw.Text(
+                    _getCentsFormatted(product.price),
+                    style: pw.TextStyle(
+                      fontSize: centsFontSize,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
                   ),
-                ),
 
-                pw.Padding(
-                  padding: pw.EdgeInsets.only(top: centsFontSize * 0.4),
-                  child: pw.Text(
-                    "/Ea.",
-                    style: pw.TextStyle(fontSize: englishFontSize),
+                  pw.Padding(
+                    padding: pw.EdgeInsets.only(top: centsFontSize * 0.4),
+                    child: pw.Text(
+                      "/Ea.",
+                      style: pw.TextStyle(fontSize: englishFontSize),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+
+            // PLU (barcode formatted as PLU) - if enabled and available
+            if (product.labelOptions.showBarcode && product.barcode.isNotEmpty)
+              pw.Text(
+                "PLU# ${product.barcode}",
+                style: pw.TextStyle(fontSize: englishFontSize),
+                textAlign: pw.TextAlign.center,
+              ),
           ],
         ),
       ),
@@ -278,36 +311,65 @@ class PrintService {
           crossAxisAlignment: pw.CrossAxisAlignment.center,
           mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
           children: [
-            // Persian product name (more compact)
-            pw.Directionality(
-              textDirection: pw.TextDirection.rtl,
-              child: pw.Text(
-                shortenedNameFa,
+            // Persian product name (more compact) - if enabled
+            if (product.labelOptions.showPersianName)
+              pw.Directionality(
+                textDirection: pw.TextDirection.rtl,
+                child: pw.Text(
+                  product.labelOptions.showBrand &&
+                          product.labelOptions.showSize
+                      ? shortenedNameFa +
+                          ' ' +
+                          product.brandFa +
+                          ' (' +
+                          product.persianSize +
+                          ')'
+                      : product.labelOptions.showBrand
+                      ? shortenedNameFa + ' ' + product.brandFa
+                      : product.labelOptions.showSize
+                      ? shortenedNameFa + ' (' + product.persianSize + ')'
+                      : shortenedNameFa,
+                  style: pw.TextStyle(
+                    font: _vazirFontBold,
+                    fontSize: persianFontSize,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                  textAlign: pw.TextAlign.center,
+                ),
+              ),
+
+            // English product name (more compact) - if enabled
+            if (product.labelOptions.showEnglishName)
+              pw.Text(
+                product.labelOptions.showBrand && product.labelOptions.showSize
+                    ? '${product.brandEn} $shortenedNameEn (${product.size})'
+                    : product.labelOptions.showBrand
+                    ? '${product.brandEn} $shortenedNameEn'
+                    : product.labelOptions.showSize
+                    ? '$shortenedNameEn (${product.size})'
+                    : shortenedNameEn,
+                style: pw.TextStyle(fontSize: englishFontSize),
+                textAlign: pw.TextAlign.center,
+              ),
+
+            // Price (simplified format for compact display) - if enabled
+            if (product.labelOptions.showPrice)
+              pw.Text(
+                "\$${product.price.toStringAsFixed(2)}",
                 style: pw.TextStyle(
-                  font: _vazirFontBold,
-                  fontSize: persianFontSize,
+                  fontSize: priceFontSize,
                   fontWeight: pw.FontWeight.bold,
                 ),
                 textAlign: pw.TextAlign.center,
               ),
-            ),
 
-            // English product name (more compact)
-            pw.Text(
-              shortenedNameEn,
-              style: pw.TextStyle(fontSize: englishFontSize),
-              textAlign: pw.TextAlign.center,
-            ),
-
-            // Price (simplified format for compact display)
-            pw.Text(
-              "\$${product.price.toStringAsFixed(2)}",
-              style: pw.TextStyle(
-                fontSize: priceFontSize,
-                fontWeight: pw.FontWeight.bold,
+            // PLU (barcode formatted as PLU) - if enabled and available
+            if (product.labelOptions.showBarcode && product.barcode.isNotEmpty)
+              pw.Text(
+                "PLU# ${product.barcode}",
+                style: pw.TextStyle(fontSize: englishFontSize * 0.8),
+                textAlign: pw.TextAlign.center,
               ),
-              textAlign: pw.TextAlign.center,
-            ),
           ],
         ),
       ),

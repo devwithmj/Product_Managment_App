@@ -22,16 +22,16 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
   final _formKey = GlobalKey<FormState>();
   final _databaseService = DatabaseService();
 
+  late TextEditingController _barcodeController;
+  late TextEditingController _priceController;
   late TextEditingController _nameEnController;
   late TextEditingController _nameFaController;
   late TextEditingController _brandEnController;
   late TextEditingController _brandFaController;
-  late TextEditingController _sizeValueController;
-  late TextEditingController _priceController;
-  late TextEditingController _barcodeController;
 
   late UnitType _selectedUnitType;
   late StoreLocation _storeLocation;
+  late LabelOptions _labelOptions;
 
   bool _isLoading = false;
   bool _isScanning = false;
@@ -46,9 +46,6 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
     _nameFaController = TextEditingController(text: product?.nameFa ?? '');
     _brandEnController = TextEditingController(text: product?.brandEn ?? '');
     _brandFaController = TextEditingController(text: product?.brandFa ?? '');
-    _sizeValueController = TextEditingController(
-      text: product?.sizeValue ?? '',
-    );
     _priceController = TextEditingController(
       text: product?.price.toString() ?? '',
     );
@@ -56,6 +53,7 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
 
     _selectedUnitType = product?.unitType ?? UnitType.gr;
     _storeLocation = product?.storeLocation ?? StoreLocation.both;
+    _labelOptions = product?.labelOptions ?? LabelOptions();
   }
 
   @override
@@ -65,7 +63,6 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
     _nameFaController.dispose();
     _brandEnController.dispose();
     _brandFaController.dispose();
-    _sizeValueController.dispose();
     _priceController.dispose();
     _barcodeController.dispose();
 
@@ -229,13 +226,13 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
             nameFa: _nameFaController.text.trim(),
             brandEn: _brandEnController.text.trim(),
             brandFa: _brandFaController.text.trim(),
-            sizeValue: _sizeValueController.text.trim(),
             unitType: _selectedUnitType,
             price: price,
             priceUpdated:
                 true, // Will be set to true automatically if price is different
             storeLocation: _storeLocation,
             barcode: _barcodeController.text.trim(),
+            labelOptions: _labelOptions,
           );
         } else {
           // Update existing product
@@ -244,13 +241,13 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
             nameFa: _nameFaController.text.trim(),
             brandEn: _brandEnController.text.trim(),
             brandFa: _brandFaController.text.trim(),
-            sizeValue: _sizeValueController.text.trim(),
             unitType: _selectedUnitType,
             price:
                 price, // Will automatically set priceUpdated to true if price changed
             storeLocation: _storeLocation,
             priceUpdated: true,
             barcode: _barcodeController.text.trim(),
+            labelOptions: _labelOptions,
           );
         }
 
@@ -417,61 +414,27 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Size/Weight with Unit Selection
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Size/Weight Value
-                          Expanded(
-                            flex: 2,
-                            child: TextFormField(
-                              controller: _sizeValueController,
-                              decoration: const InputDecoration(
-                                labelText: AppStrings.weightSize,
-                                border: OutlineInputBorder(),
-                                hintText: 'e.g., 500, 1, 750',
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Please enter size/weight value';
-                                }
-                                return null;
-                              },
-                              keyboardType: TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-
-                          // Unit Type Dropdown
-                          Expanded(
-                            flex: 1,
-                            child: DropdownButtonFormField<UnitType>(
-                              decoration: const InputDecoration(
-                                labelText: AppStrings.unit,
-                                border: OutlineInputBorder(),
-                              ),
-                              value: _selectedUnitType,
-                              items:
-                                  UnitType.values.map((unit) {
-                                    return DropdownMenuItem<UnitType>(
-                                      value: unit,
-                                      child: Text(
-                                        Product.getUnitTypeString(unit),
-                                      ),
-                                    );
-                                  }).toList(),
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setState(() {
-                                    _selectedUnitType = value;
-                                  });
-                                }
-                              },
-                            ),
-                          ),
-                        ],
+                      // Unit Type Dropdown
+                      DropdownButtonFormField<UnitType>(
+                        decoration: const InputDecoration(
+                          labelText: AppStrings.unit,
+                          border: OutlineInputBorder(),
+                        ),
+                        value: _selectedUnitType,
+                        items:
+                            UnitType.values.map((unit) {
+                              return DropdownMenuItem<UnitType>(
+                                value: unit,
+                                child: Text(Product.getUnitTypeString(unit)),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _selectedUnitType = value;
+                            });
+                          }
+                        },
                       ),
                       const SizedBox(height: 16),
 
@@ -536,6 +499,115 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                             });
                           }
                         },
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Label Options Section
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Label Options',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 12),
+                              CheckboxListTile(
+                                title: const Text('Show Price'),
+                                subtitle: const Text(
+                                  'Display product price on label',
+                                ),
+                                value: _labelOptions.showPrice,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _labelOptions = _labelOptions.copyWith(
+                                      showPrice: value,
+                                    );
+                                  });
+                                },
+                                dense: true,
+                              ),
+                              CheckboxListTile(
+                                title: const Text('Show Size'),
+                                subtitle: const Text(
+                                  'Display product size on label',
+                                ),
+                                value: _labelOptions.showSize,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _labelOptions = _labelOptions.copyWith(
+                                      showSize: value,
+                                    );
+                                  });
+                                },
+                                dense: true,
+                              ),
+                              CheckboxListTile(
+                                title: const Text('Show Barcode'),
+                                subtitle: const Text(
+                                  'Display barcode on label as PLU',
+                                ),
+                                value: _labelOptions.showBarcode,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _labelOptions = _labelOptions.copyWith(
+                                      showBarcode: value,
+                                    );
+                                  });
+                                },
+                                dense: true,
+                              ),
+                              CheckboxListTile(
+                                title: const Text('Show English Name'),
+                                subtitle: const Text(
+                                  'Display English product name',
+                                ),
+                                value: _labelOptions.showEnglishName,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _labelOptions = _labelOptions.copyWith(
+                                      showEnglishName: value,
+                                    );
+                                  });
+                                },
+                                dense: true,
+                              ),
+                              CheckboxListTile(
+                                title: const Text('Show Persian Name'),
+                                subtitle: const Text(
+                                  'Display Persian product name',
+                                ),
+                                value: _labelOptions.showPersianName,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _labelOptions = _labelOptions.copyWith(
+                                      showPersianName: value,
+                                    );
+                                  });
+                                },
+                                dense: true,
+                              ),
+                              CheckboxListTile(
+                                title: const Text('Show Brand'),
+                                subtitle: const Text(
+                                  'Include brand name in labels',
+                                ),
+                                value: _labelOptions.showBrand,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _labelOptions = _labelOptions.copyWith(
+                                      showBrand: value,
+                                    );
+                                  });
+                                },
+                                dense: true,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 24),
 

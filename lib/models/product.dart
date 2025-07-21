@@ -21,6 +21,68 @@ enum UnitType {
   ea,
 }
 
+// Label customization options
+class LabelOptions {
+  final bool showPrice;
+  final bool showSize;
+  final bool showBarcode; // Changed from showPLU to showBarcode
+  final bool showEnglishName;
+  final bool showPersianName;
+  final bool showBrand;
+
+  const LabelOptions({
+    this.showPrice = true,
+    this.showSize = true,
+    this.showBarcode =
+        true, // Changed default to true so barcode shows by default
+    this.showEnglishName = true,
+    this.showPersianName = true,
+    this.showBrand = true,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'showPrice': showPrice ? 1 : 0,
+      'showSize': showSize ? 1 : 0,
+      'showBarcode': showBarcode ? 1 : 0, // Changed from showPLU
+      'showEnglishName': showEnglishName ? 1 : 0,
+      'showPersianName': showPersianName ? 1 : 0,
+      'showBrand': showBrand ? 1 : 0,
+    };
+  }
+
+  factory LabelOptions.fromMap(Map<String, dynamic> map) {
+    return LabelOptions(
+      showPrice: (map['showPrice'] ?? 1) == 1,
+      showSize: (map['showSize'] ?? 1) == 1,
+      showBarcode:
+          (map['showBarcode'] ?? map['showPLU'] ?? 1) ==
+          1, // Support both old and new field names, default to true
+      showEnglishName: (map['showEnglishName'] ?? 1) == 1,
+      showPersianName: (map['showPersianName'] ?? 1) == 1,
+      showBrand: (map['showBrand'] ?? 1) == 1,
+    );
+  }
+
+  LabelOptions copyWith({
+    bool? showPrice,
+    bool? showSize,
+    bool? showBarcode, // Changed from showPLU
+    bool? showEnglishName,
+    bool? showPersianName,
+    bool? showBrand,
+  }) {
+    return LabelOptions(
+      showPrice: showPrice ?? this.showPrice,
+      showSize: showSize ?? this.showSize,
+      showBarcode: showBarcode ?? this.showBarcode, // Changed from showPLU
+      showEnglishName: showEnglishName ?? this.showEnglishName,
+      showPersianName: showPersianName ?? this.showPersianName,
+      showBrand: showBrand ?? this.showBrand,
+    );
+  }
+}
+
 class Product {
   final String id;
   String nameEn;
@@ -33,6 +95,7 @@ class Product {
   bool priceUpdated;
   StoreLocation storeLocation;
   String barcode;
+  LabelOptions labelOptions; // Custom label display options
   DateTime createdAt;
   DateTime updatedAt;
 
@@ -42,18 +105,27 @@ class Product {
       '${NumberFormatter.convertToPersianNumber(sizeValue)}${getUnitTypeStringFa(unitType)}';
   String get fullNameFa => '$nameFa $brandFa ($persianSize)';
   String get fullNameEn => '$brandEn $nameEn ($size)';
+
+  // Validate barcode format (for PLU use, 2-5 digits)
+  bool get isValidPLU =>
+      barcode.isEmpty ||
+      (barcode.length >= 2 &&
+          barcode.length <= 5 &&
+          int.tryParse(barcode) != null);
+
   Product({
     required this.id,
     required this.nameEn,
     required this.nameFa,
     required this.brandEn,
     required this.brandFa,
-    required this.sizeValue,
+    this.sizeValue = '',
     required this.unitType,
     required this.price,
     this.priceUpdated = false,
     this.storeLocation = StoreLocation.both,
     this.barcode = '',
+    this.labelOptions = const LabelOptions(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : createdAt = createdAt ?? DateTime.now(),
@@ -71,6 +143,7 @@ class Product {
     bool? priceUpdated,
     StoreLocation? storeLocation,
     String? barcode,
+    LabelOptions? labelOptions,
     DateTime? updatedAt,
   }) {
     // If price is changing, automatically set priceUpdated to true
@@ -91,6 +164,7 @@ class Product {
       priceUpdated: isPriceUpdated,
       storeLocation: storeLocation ?? this.storeLocation,
       barcode: barcode ?? this.barcode,
+      labelOptions: labelOptions ?? this.labelOptions,
       createdAt: createdAt,
       updatedAt: updatedAt ?? DateTime.now(),
     );
@@ -110,6 +184,7 @@ class Product {
       'priceUpdated': priceUpdated ? 1 : 0, // Convert bool to int for SQLite
       'storeLocation': storeLocation.index,
       'barcode': barcode,
+      ...labelOptions.toMap(), // Spread the label options into the map
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
     };
@@ -158,6 +233,14 @@ class Product {
       updatedAt = DateTime.now();
     }
 
+    // Parse label options
+    LabelOptions labelOptions;
+    try {
+      labelOptions = LabelOptions.fromMap(map);
+    } catch (e) {
+      labelOptions = const LabelOptions();
+    }
+
     return Product(
       id: map['id'],
       nameEn: map['nameEn'],
@@ -171,6 +254,7 @@ class Product {
       priceUpdated: isPriceUpdated,
       storeLocation: StoreLocation.values[map['storeLocation']],
       barcode: map['barcode'] ?? '',
+      labelOptions: labelOptions,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
@@ -223,7 +307,8 @@ class Product {
   String toString() {
     return 'Product(id: $id, nameEn: $nameEn, nameFa: $nameFa, brandEn: $brandEn, '
         'brandFa: $brandFa, size: $size, price: $price, '
-        'priceUpdated: $priceUpdated, storeLocation: $storeLocation, barcode: $barcode)';
+        'priceUpdated: $priceUpdated, storeLocation: $storeLocation, barcode: $barcode, '
+        'labelOptions: $labelOptions)';
   }
 }
 

@@ -119,6 +119,13 @@ class DatabaseService {
         priceUpdated INTEGER NOT NULL,
         storeLocation INTEGER NOT NULL,
         barcode TEXT,
+        plu TEXT,
+        showPrice INTEGER DEFAULT 1,
+        showSize INTEGER DEFAULT 1,
+        showPLU INTEGER DEFAULT 0,
+        showEnglishName INTEGER DEFAULT 1,
+        showPersianName INTEGER DEFAULT 1,
+        showBrand INTEGER DEFAULT 1,
         createdAt INTEGER NOT NULL,
         updatedAt INTEGER NOT NULL
       )
@@ -211,6 +218,81 @@ class DatabaseService {
         }
       } catch (e) {
         print('Error creating price logs table: $e');
+      }
+    }
+
+    if (oldVersion < 5) {
+      try {
+        final tableInfo = await db.rawQuery(
+          "PRAGMA table_info(${AppConfig.productsTable})",
+        );
+
+        // Add PLU field
+        if (!tableInfo.any((column) => column['name'] == 'plu')) {
+          await db.execute(
+            'ALTER TABLE ${AppConfig.productsTable} ADD COLUMN plu TEXT DEFAULT ""',
+          );
+        }
+
+        // Add label options fields
+        if (!tableInfo.any((column) => column['name'] == 'showPrice')) {
+          await db.execute(
+            'ALTER TABLE ${AppConfig.productsTable} ADD COLUMN showPrice INTEGER DEFAULT 1',
+          );
+        }
+
+        if (!tableInfo.any((column) => column['name'] == 'showSize')) {
+          await db.execute(
+            'ALTER TABLE ${AppConfig.productsTable} ADD COLUMN showSize INTEGER DEFAULT 1',
+          );
+        }
+
+        if (!tableInfo.any((column) => column['name'] == 'showPLU')) {
+          await db.execute(
+            'ALTER TABLE ${AppConfig.productsTable} ADD COLUMN showPLU INTEGER DEFAULT 0',
+          );
+        }
+
+        if (!tableInfo.any((column) => column['name'] == 'showEnglishName')) {
+          await db.execute(
+            'ALTER TABLE ${AppConfig.productsTable} ADD COLUMN showEnglishName INTEGER DEFAULT 1',
+          );
+        }
+
+        if (!tableInfo.any((column) => column['name'] == 'showPersianName')) {
+          await db.execute(
+            'ALTER TABLE ${AppConfig.productsTable} ADD COLUMN showPersianName INTEGER DEFAULT 1',
+          );
+        }
+
+        if (!tableInfo.any((column) => column['name'] == 'showBrand')) {
+          await db.execute(
+            'ALTER TABLE ${AppConfig.productsTable} ADD COLUMN showBrand INTEGER DEFAULT 1',
+          );
+        }
+
+        print('Successfully upgraded database to version 5');
+      } catch (e) {
+        print('Error upgrading database to version 5: $e');
+      }
+    }
+
+    if (oldVersion < 6) {
+      try {
+        final tableInfo = await db.rawQuery(
+          "PRAGMA table_info(${AppConfig.productsTable})",
+        );
+
+        // Add showBarcode field (replacing showPLU)
+        if (!tableInfo.any((column) => column['name'] == 'showBarcode')) {
+          await db.execute(
+            'ALTER TABLE ${AppConfig.productsTable} ADD COLUMN showBarcode INTEGER DEFAULT 1',
+          );
+        }
+
+        print('Successfully upgraded database to version 6');
+      } catch (e) {
+        print('Error upgrading database to version 6: $e');
       }
     }
   }
@@ -961,7 +1043,7 @@ class DatabaseService {
       // Always update cache too
       for (int i = 0; i < _productsCache.length; i++) {
         final product = _productsCache[i];
-        if (products.entries.contains(product.id) && product.priceUpdated) {
+        if (products.containsKey(product.id) && product.priceUpdated) {
           _productsCache[i] = product.copyWith(priceUpdated: false);
           updatedCount++;
         }
@@ -982,7 +1064,7 @@ class DatabaseService {
         int updatedCount = 0;
         for (int i = 0; i < _productsCache.length; i++) {
           final product = _productsCache[i];
-          if (products.entries.contains(product.id) && product.priceUpdated) {
+          if (products.containsKey(product.id) && product.priceUpdated) {
             _productsCache[i] = product.copyWith(priceUpdated: false);
             updatedCount++;
           }
