@@ -7,6 +7,7 @@ import 'product_list_screen.dart';
 import 'print_screen.dart';
 import 'barcode_scanner_screen.dart';
 import 'settings_screen.dart';
+import 'template_demo_screen.dart';
 
 class ImprovedHomeScreen extends StatefulWidget {
   const ImprovedHomeScreen({super.key});
@@ -240,6 +241,11 @@ class _ImprovedHomeScreenState extends State<ImprovedHomeScreen> {
             title: 'Barcode Scanner',
             onTap: () => _navigateFromDrawer(3),
           ),
+          _buildDrawerItem(
+            icon: Icons.label,
+            title: 'Label Templates',
+            onTap: () => _navigateToTemplates(),
+          ),
           const Divider(),
           _buildDrawerItem(
             icon: Icons.settings,
@@ -307,6 +313,13 @@ class _ImprovedHomeScreenState extends State<ImprovedHomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const SettingsScreen()),
+    );
+  }
+
+  void _navigateToTemplates() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const TemplateDemoScreen()),
     );
   }
 

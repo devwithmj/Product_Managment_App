@@ -2,12 +2,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:product_app/widgets/searchbar_widget.dart';
 import '../models/product.dart';
-import '../models/label_template.dart';
+import '../models/dynamic_label_template.dart';
 import '../services/database_service.dart';
-import '../services/print_service.dart';
+import '../services/dynamic_print_service.dart';
 import '../utils/constants.dart';
 import '../widgets/product_item.dart';
-import 'label_preview_screen.dart';
+import 'dynamic_label_templates_screen.dart';
 
 class PrintScreen extends StatefulWidget {
   const PrintScreen({super.key});
@@ -31,8 +31,8 @@ class _PrintScreenState extends State<PrintScreen> {
   StoreLocation? _locationFilter;
   bool? _priceUpdatedFilter;
 
-  // Selected label template
-  LabelSize _selectedLabelSize = LabelTemplates.standard;
+  // Selected dynamic label template
+  DynamicLabelTemplate _selectedTemplate = DynamicLabelTemplates.standard;
 
   // Generated PDF data
   Uint8List? _pdfData;
@@ -159,7 +159,7 @@ class _PrintScreenState extends State<PrintScreen> {
   Future<void> _fillAverySheet(Product product) async {
     // Calculate how many labels fit on the selected template
     final int labelsPerPage =
-        _selectedLabelSize.rowsPerPage * _selectedLabelSize.columnsPerPage;
+        _selectedTemplate.rowsPerPage * _selectedTemplate.columnsPerPage;
 
     setState(() {
       // Fill the selection with the same product repeated for one full page
@@ -179,7 +179,7 @@ class _PrintScreenState extends State<PrintScreen> {
 
     // Calculate how many labels fit on the selected template
     final int labelsPerPage =
-        _selectedLabelSize.rowsPerPage * _selectedLabelSize.columnsPerPage;
+        _selectedTemplate.rowsPerPage * _selectedTemplate.columnsPerPage;
 
     // Get unique products from selection
     final uniqueProducts = <Product>[];
@@ -229,9 +229,9 @@ class _PrintScreenState extends State<PrintScreen> {
         });
 
         try {
-          final pdfBytes = await PrintService.generatePdf(
+          final pdfBytes = await DynamicPrintService.generatePdf(
             products: _selectedProducts,
-            labelSize: _selectedLabelSize,
+            template: _selectedTemplate,
           );
 
           setState(() {
@@ -252,7 +252,7 @@ class _PrintScreenState extends State<PrintScreen> {
 
       if (_pdfData != null && _pdfData!.isNotEmpty && mounted) {
         try {
-          await PrintService.printPdf(_pdfData!);
+          await DynamicPrintService.printPdf(_pdfData!);
         } catch (e) {
           setState(() {
             _hasPrintError = true;
@@ -281,13 +281,13 @@ class _PrintScreenState extends State<PrintScreen> {
       }
 
       // Generate PDF directly without any UI feedback
-      final pdfBytes = await PrintService.generatePdf(
+      final pdfBytes = await DynamicPrintService.generatePdf(
         products: _selectedProducts,
-        labelSize: _selectedLabelSize,
+        template: _selectedTemplate,
       );
 
       // Print directly without showing the print dialog preview
-      await PrintService.printPdf(pdfBytes);
+      await DynamicPrintService.printPdf(pdfBytes);
     } catch (e) {
       // Silent error handling - only show error if something critical happens
       if (mounted) {
@@ -299,13 +299,7 @@ class _PrintScreenState extends State<PrintScreen> {
   void _previewSingleLabel(Product product) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder:
-            (context) => LabelPreviewScreen(
-              product: product,
-              labelSize: _selectedLabelSize,
-            ),
-      ),
+      MaterialPageRoute(builder: (context) => DynamicLabelTemplatesScreen()),
     );
   }
 
@@ -408,7 +402,7 @@ class _PrintScreenState extends State<PrintScreen> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: DropdownButtonFormField<LabelSize>(
+                  child: DropdownButtonFormField<DynamicLabelTemplate>(
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(
@@ -416,24 +410,20 @@ class _PrintScreenState extends State<PrintScreen> {
                         vertical: 8,
                       ),
                     ),
-                    value: _selectedLabelSize,
+                    value: _selectedTemplate,
                     items:
-                        LabelTemplates.allSizes
-                            .where(
-                              (size) => !LabelTemplates.isThermalSize(size),
-                            )
-                            .map((size) {
-                              return DropdownMenuItem<LabelSize>(
-                                value: size,
-                                child: Text(size.name),
-                              );
-                            })
-                            .toList(),
-                    onChanged: (LabelSize? value) {
+                        DynamicLabelTemplates.allTemplates.map((template) {
+                          return DropdownMenuItem<DynamicLabelTemplate>(
+                            value: template,
+                            child: Text(template.name),
+                          );
+                        }).toList(),
+                    onChanged: (DynamicLabelTemplate? value) {
                       if (value != null) {
                         setState(() {
-                          _selectedLabelSize = value;
-                          _pdfData = null; // Reset preview when size changes
+                          _selectedTemplate = value;
+                          _pdfData =
+                              null; // Reset preview when template changes
                         });
                       }
                     },
@@ -618,7 +608,7 @@ class _PrintScreenState extends State<PrintScreen> {
                 ],
               ),
               // Fill Sheet button row
-              if (_selectedLabelSize.name.contains("Avery"))
+              if (_selectedTemplate.name.contains("Avery"))
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Row(
@@ -627,27 +617,27 @@ class _PrintScreenState extends State<PrintScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ElevatedButton.icon(
-                              icon: const Icon(Icons.content_copy),
-                              label: Text(
-                                _selectedProducts.length == 1
-                                    ? 'Fill ${_selectedLabelSize.name} Sheet'
-                                    : 'Fill ${_selectedLabelSize.name} Pages (${_getUniqueProductCount()} pages)',
-                              ),
-                              onPressed:
-                                  _selectedProducts.isEmpty
-                                      ? null
-                                      : _selectedProducts.length == 1
-                                      ? () async => await _fillAverySheet(
-                                        _selectedProducts.first,
-                                      )
-                                      : () async =>
-                                          await _fillAverySheetWithSelectedProducts(),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                foregroundColor: Colors.white,
-                              ),
-                            ),
+                            // ElevatedButton.icon(
+                            //   icon: const Icon(Icons.content_copy),
+                            //   label: Text(
+                            //     _selectedProducts.length == 1
+                            //         ? 'Fill ${_selectedTemplate.name} Sheet'
+                            //         : 'Fill ${_selectedTemplate.name} Pages (${_getUniqueProductCount()} pages)',
+                            //   ),
+                            //   onPressed:
+                            //       _selectedProducts.isEmpty
+                            //           ? null
+                            //           : _selectedProducts.length == 1
+                            //           ? () async => await _fillAverySheet(
+                            //             _selectedProducts.first,
+                            //           )
+                            //           : () async =>
+                            //               await _fillAverySheetWithSelectedProducts(),
+                            //   style: ElevatedButton.styleFrom(
+                            //     backgroundColor: Colors.blue,
+                            //     foregroundColor: Colors.white,
+                            //   ),
+                            // ),
                             if (_selectedProducts.isEmpty)
                               Padding(
                                 padding: const EdgeInsets.only(
@@ -704,7 +694,7 @@ class _PrintScreenState extends State<PrintScreen> {
                 onEdit: () => _previewSingleLabel(product),
                 onDelete: () {}, // No delete functionality on this screen
                 onDuplicate:
-                    _selectedLabelSize.name.contains("Avery")
+                    _selectedTemplate.name.contains("Avery")
                         ? () async => await _fillAverySheet(product)
                         : null, // Show fill sheet button only for Avery templates
                 onPrint:
@@ -749,16 +739,9 @@ class _PrintScreenState extends State<PrintScreen> {
               Expanded(
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.content_copy),
-                  label: Text(
-                    _selectedLabelSize.name.contains("Avery")
-                        ? 'Fill ${_selectedLabelSize.name} Pages'
-                        : 'Fill Label Pages',
-                  ),
+                  label: Text('Fill Label Pages'),
                   onPressed:
-                      _selectedProducts.isEmpty || _isGeneratingPreview
-                          ? null
-                          : () async =>
-                              await _fillAverySheetWithSelectedProducts(),
+                      () async => await _fillAverySheetWithSelectedProducts(),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     backgroundColor: Colors.blue,
