@@ -7,14 +7,14 @@ import './dynamic_print_screen.dart';
 
 /// Demo screen showing all the template management features
 class TemplateDemoScreen extends StatefulWidget {
-  const TemplateDemoScreen({Key? key}) : super(key: key);
+  const TemplateDemoScreen({super.key});
 
   @override
   State<TemplateDemoScreen> createState() => _TemplateDemoScreenState();
 }
 
 class _TemplateDemoScreenState extends State<TemplateDemoScreen> {
-  List<DynamicLabelTemplate> _customTemplates = [];
+  final List<DynamicLabelTemplate> _customTemplates = [];
   List<Product> _sampleProducts = [];
 
   @override
@@ -269,14 +269,10 @@ class _TemplateDemoScreenState extends State<TemplateDemoScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    ...DynamicLabelTemplates.allTemplates
-                        .map(
-                          (template) => _buildTemplateListItem(
-                            template,
-                            isPrebuilt: true,
-                          ),
-                        )
-                        .toList(),
+                    ...DynamicLabelTemplates.allTemplates.map(
+                      (template) =>
+                          _buildTemplateListItem(template, isPrebuilt: true),
+                    ),
 
                     if (_customTemplates.isNotEmpty) ...[
                       const SizedBox(height: 16),
@@ -289,14 +285,10 @@ class _TemplateDemoScreenState extends State<TemplateDemoScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      ..._customTemplates
-                          .map(
-                            (template) => _buildTemplateListItem(
-                              template,
-                              isPrebuilt: false,
-                            ),
-                          )
-                          .toList(),
+                      ..._customTemplates.map(
+                        (template) =>
+                            _buildTemplateListItem(template, isPrebuilt: false),
+                      ),
                     ],
                   ],
                 ),
@@ -321,9 +313,9 @@ class _TemplateDemoScreenState extends State<TemplateDemoScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    ..._sampleProducts
-                        .map((product) => _buildProductListItem(product))
-                        .toList(),
+                    ..._sampleProducts.map(
+                      (product) => _buildProductListItem(product),
+                    ),
                   ],
                 ),
               ),

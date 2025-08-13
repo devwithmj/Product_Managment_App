@@ -8,11 +8,11 @@ class DynamicLabelWidget extends StatelessWidget {
   final double scaleFactor;
 
   const DynamicLabelWidget({
-    Key? key,
+    super.key,
     required this.product,
     required this.template,
     this.scaleFactor = 1.0,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -177,11 +177,11 @@ class DynamicLabelTemplateEditor extends StatefulWidget {
   final Product? previewProduct;
 
   const DynamicLabelTemplateEditor({
-    Key? key,
+    super.key,
     required this.template,
     required this.onTemplateChanged,
     this.previewProduct,
-  }) : super(key: key);
+  });
 
   @override
   State<DynamicLabelTemplateEditor> createState() =>

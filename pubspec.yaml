@@ -48,6 +48,8 @@ dependencies:
   share_plus: ^10.1.4
   file_picker: ^10.1.0
   intl: ^0.20.2
+  shared_preferences: ^2.3.4
+  provider: ^6.1.2
   barcode: ^2.2.9
   mobile_scanner: ^7.0.1
 

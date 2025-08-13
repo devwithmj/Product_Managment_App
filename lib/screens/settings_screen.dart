@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/database_backup_service.dart';
 import '../services/database_service.dart';
+import '../widgets/storage_permission_handler.dart';
+import 'theme_settings_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -88,6 +90,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Theme section
+                    Card(
+                      margin: const EdgeInsets.only(bottom: 16.0),
+                      child: ListTile(
+                        leading: const Icon(Icons.palette),
+                        title: const Text('App Theme'),
+                        subtitle: const Text('Change colors and appearance'),
+                        trailing: const Icon(Icons.arrow_forward_ios),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ThemeSettingsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
                     // Database section
                     Card(
                       margin: const EdgeInsets.only(bottom: 16.0),
@@ -138,6 +159,69 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               style: ElevatedButton.styleFrom(
                                 minimumSize: const Size(double.infinity, 40),
                                 backgroundColor: Colors.red,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Permissions section
+                    Card(
+                      margin: const EdgeInsets.only(bottom: 16.0),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Permissions',
+                              style: TextStyle(
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8.0),
+                            const Text(
+                              'Manage app permissions for file operations',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                            const SizedBox(height: 16.0),
+
+                            // Storage permission button
+                            StoragePermissionButton(
+                              text: 'Check Storage Permission',
+                              onSuccess: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      '✅ Storage permission granted! You can now import database files.',
+                                    ),
+                                    backgroundColor: Colors.green,
+                                    duration: Duration(seconds: 3),
+                                  ),
+                                );
+                              },
+                              onFailure: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      '❌ Storage permission required for importing database files.',
+                                    ),
+                                    backgroundColor: Colors.orange,
+                                    duration: Duration(seconds: 4),
+                                  ),
+                                );
+                              },
+                            ),
+
+                            const SizedBox(height: 12.0),
+
+                            const Text(
+                              'Note: Storage permission is required to import database files from your device. Export functionality works without additional permissions.',
+                              style: TextStyle(
+                                fontSize: 12.0,
+                                color: Colors.grey,
                               ),
                             ),
                           ],

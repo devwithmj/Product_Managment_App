@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Splash screen background color - default blue, can be updated -->
+    <color name="splash_background">#2196F3</color>
+    
+    <!-- Other app colors -->
+    <color name="primary_color">#2196F3</color>
+    <color name="accent_color">#FFC107</color>
+</resources>

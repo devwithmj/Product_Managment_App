@@ -3,12 +3,12 @@ import '../models/product.dart';
 import '../models/dynamic_label_template.dart';
 import '../widgets/dynamic_label_widget.dart';
 import '../services/dynamic_print_service.dart';
+import '../services/label_template_persistence_service.dart';
 
 class DynamicLabelTemplatesScreen extends StatefulWidget {
   final List<Product>? products;
 
-  const DynamicLabelTemplatesScreen({Key? key, this.products})
-    : super(key: key);
+  const DynamicLabelTemplatesScreen({super.key, this.products});
 
   @override
   State<DynamicLabelTemplatesScreen> createState() =>
@@ -17,15 +17,16 @@ class DynamicLabelTemplatesScreen extends StatefulWidget {
 
 class _DynamicLabelTemplatesScreenState
     extends State<DynamicLabelTemplatesScreen> {
-  List<DynamicLabelTemplate> _templates = DynamicLabelTemplates.allTemplates;
+  List<DynamicLabelTemplate> _templates = [];
   DynamicLabelTemplate? _selectedTemplate;
   late Product _previewProduct;
   bool _isPrinting = false;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _selectedTemplate = _templates.isNotEmpty ? _templates.first : null;
+    _loadTemplates();
 
     // Create a sample product for preview
     _previewProduct = Product(
@@ -41,12 +42,67 @@ class _DynamicLabelTemplatesScreenState
     );
   }
 
+  Future<void> _loadTemplates() async {
+    try {
+      final templates =
+          await LabelTemplatePersistenceService.getAllTemplatesWithBuiltIn();
+      setState(() {
+        _templates = templates;
+        _selectedTemplate = templates.isNotEmpty ? templates.first : null;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _templates = DynamicLabelTemplates.allTemplates; // Fallback to built-in
+        _selectedTemplate = _templates.isNotEmpty ? _templates.first : null;
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading templates: $e'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _refreshTemplates() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await _loadTemplates();
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Dynamic Label Templates')),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Loading templates...'),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dynamic Label Templates'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _refreshTemplates,
+            tooltip: 'Refresh Templates',
+          ),
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: _createNewTemplate,
@@ -310,7 +366,7 @@ class _DynamicLabelTemplatesScreenState
                     ],
                   ),
                 );
-              }).toList(),
+              }),
             ],
           ),
         ),
@@ -405,41 +461,101 @@ class _DynamicLabelTemplatesScreenState
             (context) => DynamicLabelTemplateEditor(
               template: template,
               previewProduct: _previewProduct,
-              onTemplateChanged: (updatedTemplate) {
-                setState(() {
-                  if (isNew) {
-                    _templates.add(updatedTemplate);
-                  } else {
-                    final index = _templates.indexOf(template);
-                    if (index != -1) {
-                      _templates[index] = updatedTemplate;
-                    }
+              onTemplateChanged: (updatedTemplate) async {
+                // Save template persistently
+                try {
+                  await LabelTemplatePersistenceService.saveTemplate(
+                    updatedTemplate,
+                  );
+
+                  // Refresh templates from persistence to get latest state
+                  await _refreshTemplates();
+
+                  // Select the updated template
+                  setState(() {
+                    _selectedTemplate = updatedTemplate;
+                  });
+
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Template "${updatedTemplate.name}" saved successfully!',
+                        ),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
                   }
-                  _selectedTemplate = updatedTemplate;
-                });
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error saving template: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
               },
             ),
       ),
     );
   }
 
-  void _duplicateTemplate(DynamicLabelTemplate template) {
+  void _duplicateTemplate(DynamicLabelTemplate template) async {
     final duplicated = template.copyWith(name: '${template.name} (Copy)');
 
-    setState(() {
-      _templates.add(duplicated);
-      _selectedTemplate = duplicated;
-    });
+    try {
+      await LabelTemplatePersistenceService.saveTemplate(duplicated);
+      await _refreshTemplates();
+
+      setState(() {
+        _selectedTemplate = duplicated;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Template duplicated as "${duplicated.name}"'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error duplicating template: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
-  void _deleteTemplate(DynamicLabelTemplate template) {
+  void _deleteTemplate(DynamicLabelTemplate template) async {
+    // Check if it's a custom template (can be deleted)
+    final isCustom = await LabelTemplatePersistenceService.isCustomTemplate(
+      template.name,
+    );
+
+    if (!isCustom) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Built-in templates cannot be deleted'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
             title: const Text('Delete Template'),
             content: Text(
-              'Are you sure you want to delete "${template.name}"?',
+              'Are you sure you want to delete "${template.name}"?\n\nThis action cannot be undone.',
             ),
             actions: [
               TextButton(
@@ -447,16 +563,43 @@ class _DynamicLabelTemplatesScreenState
                 child: const Text('Cancel'),
               ),
               TextButton(
-                onPressed: () {
-                  setState(() {
-                    _templates.remove(template);
-                    if (_selectedTemplate == template) {
-                      _selectedTemplate =
-                          _templates.isNotEmpty ? _templates.first : null;
+                onPressed: () async {
+                  try {
+                    await LabelTemplatePersistenceService.deleteTemplate(
+                      template.name,
+                    );
+                    await _refreshTemplates();
+
+                    setState(() {
+                      if (_selectedTemplate == template) {
+                        _selectedTemplate =
+                            _templates.isNotEmpty ? _templates.first : null;
+                      }
+                    });
+
+                    Navigator.of(context).pop();
+
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Template "${template.name}" deleted'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
                     }
-                  });
-                  Navigator.of(context).pop();
+                  } catch (e) {
+                    Navigator.of(context).pop();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error deleting template: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
                 },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
                 child: const Text('Delete'),
               ),
             ],
@@ -472,6 +615,11 @@ class _DynamicLabelTemplatesScreenState
     });
 
     try {
+      // Record template usage
+      await LabelTemplatePersistenceService.recordTemplateUsage(
+        _selectedTemplate!.name,
+      );
+
       final pdfBytes = await DynamicPrintService.generatePdf(
         products: widget.products!,
         template: _selectedTemplate!,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../models/dynamic_label_template.dart';
 import '../widgets/dynamic_label_widget.dart';
+import '../services/label_template_persistence_service.dart';
 import 'label_template_preview_screen.dart';
 
 class LabelTemplateCreatorScreen extends StatefulWidget {
@@ -9,10 +10,10 @@ class LabelTemplateCreatorScreen extends StatefulWidget {
   final Function(DynamicLabelTemplate)? onTemplateSaved;
 
   const LabelTemplateCreatorScreen({
-    Key? key,
+    super.key,
     this.initialTemplate,
     this.onTemplateSaved,
-  }) : super(key: key);
+  });
 
   @override
   State<LabelTemplateCreatorScreen> createState() =>
@@ -264,8 +265,9 @@ class _LabelTemplateCreatorScreenState
                   validator: (value) {
                     if (value == null || value.isEmpty) return 'Required';
                     final cols = int.tryParse(value);
-                    if (cols == null || cols <= 0 || cols > 10)
+                    if (cols == null || cols <= 0 || cols > 10) {
                       return 'Invalid (1-10)';
+                    }
                     return null;
                   },
                 ),
@@ -282,8 +284,9 @@ class _LabelTemplateCreatorScreenState
                   validator: (value) {
                     if (value == null || value.isEmpty) return 'Required';
                     final rows = int.tryParse(value);
-                    if (rows == null || rows <= 0 || rows > 20)
+                    if (rows == null || rows <= 0 || rows > 20) {
                       return 'Invalid (1-20)';
+                    }
                     return null;
                   },
                 ),
@@ -380,7 +383,7 @@ class _LabelTemplateCreatorScreenState
           final index = entry.key;
           final row = entry.value;
           return _buildRowEditor(row, index);
-        }).toList(),
+        }),
 
         const SizedBox(height: 16),
         Card(
@@ -921,22 +924,50 @@ class _LabelTemplateCreatorScreenState
     );
   }
 
-  void _saveTemplate() {
+  void _saveTemplate() async {
     if (_formKey.currentState?.validate() ?? false) {
       final template = _buildCurrentTemplate();
 
-      if (widget.onTemplateSaved != null) {
-        widget.onTemplateSaved!(template);
+      try {
+        // Save template persistently
+        await LabelTemplatePersistenceService.saveTemplate(template);
+
+        if (widget.onTemplateSaved != null) {
+          widget.onTemplateSaved!(template);
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Template "${template.name}" saved successfully!'),
+              backgroundColor: Colors.green,
+              action: SnackBarAction(
+                label: 'OK',
+                textColor: Colors.white,
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                },
+              ),
+            ),
+          );
+
+          Navigator.of(context).pop(template);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error saving template: $e'),
+              backgroundColor: Colors.red,
+              action: SnackBarAction(
+                label: 'Retry',
+                textColor: Colors.white,
+                onPressed: () => _saveTemplate(),
+              ),
+            ),
+          );
+        }
       }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Template "${template.name}" saved successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      Navigator.of(context).pop(template);
     }
   }
 }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primary = Color(0xFF2196F3);
+  static const Color primary = Color(0xFFF44336);
   static const Color accent = Color(0xFFFFA000);
   static const Color background = Color(0xFFF5F5F5);
-  static const Color cardBackground = Colors.white;
+  static const Color cardBackground = Color.fromRGBO(255, 255, 255, 1);
   static const Color priceUpdated = Color(0xFFF44336);
   static const Color textPrimary = Color(0xFF212121);
   static const Color textSecondary = Color(0xFF757575);
@@ -16,7 +16,7 @@ class AppFonts {
 }
 
 class AppStrings {
-  static const String appTitle = 'Product Label Printing';
+  static const String appTitle = 'Parsian Label Printing';
   static const String products = 'Products';
   static const String printLabels = 'Print Labels';
   static const String preview = 'Preview';

@@ -8,10 +8,10 @@ class LabelTemplatePreviewScreen extends StatefulWidget {
   final Product? previewProduct;
 
   const LabelTemplatePreviewScreen({
-    Key? key,
+    super.key,
     required this.template,
     this.previewProduct,
-  }) : super(key: key);
+  });
 
   @override
   State<LabelTemplatePreviewScreen> createState() =>
@@ -402,7 +402,7 @@ class _LabelTemplatePreviewScreenState
                         ],
                       ),
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),

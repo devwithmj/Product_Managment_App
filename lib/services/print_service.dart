@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import '../models/product.dart';
 import '../models/label_template.dart';
 import '../utils/label_layout.dart';
+import '../screens/print_preview_screen.dart';
 
 class PrintService {
   // Load the Vazirmatn font as a global variable
@@ -318,16 +319,11 @@ class PrintService {
                 child: pw.Text(
                   product.labelOptions.showBrand &&
                           product.labelOptions.showSize
-                      ? shortenedNameFa +
-                          ' ' +
-                          product.brandFa +
-                          ' (' +
-                          product.persianSize +
-                          ')'
+                      ? '$shortenedNameFa ${product.brandFa} (${product.persianSize})'
                       : product.labelOptions.showBrand
-                      ? shortenedNameFa + ' ' + product.brandFa
+                      ? '$shortenedNameFa ${product.brandFa}'
                       : product.labelOptions.showSize
-                      ? shortenedNameFa + ' (' + product.persianSize + ')'
+                      ? '$shortenedNameFa (${product.persianSize})'
                       : shortenedNameFa,
                   style: pw.TextStyle(
                     font: _vazirFontBold,
@@ -410,18 +406,36 @@ class PrintService {
     );
   }
 
-  // Show a print preview dialog
+  // Show a print preview dialog with navigation controls
   static Future<void> showPrintPreview(
     BuildContext context,
-    Uint8List pdfBytes,
-  ) async {
+    Uint8List pdfBytes, {
+    String title = 'Product Labels',
+  }) async {
+    if (pdfBytes.isEmpty) {
+      throw Exception('PDF data is empty');
+    }
+
+    await PrintPreviewHelper.showPreview(
+      context: context,
+      pdfBytes: pdfBytes,
+      title: title,
+    );
+  }
+
+  /// Show system print dialog (legacy method for compatibility)
+  static Future<void> showSystemPrintDialog(
+    BuildContext context,
+    Uint8List pdfBytes, {
+    String title = 'Product Labels',
+  }) async {
     if (pdfBytes.isEmpty) {
       throw Exception('PDF data is empty');
     }
 
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdfBytes,
-      name: 'Product Labels',
+      name: title,
       usePrinterSettings: true,
     );
   }

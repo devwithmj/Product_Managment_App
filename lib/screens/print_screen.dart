@@ -5,6 +5,7 @@ import '../models/product.dart';
 import '../models/dynamic_label_template.dart';
 import '../services/database_service.dart';
 import '../services/dynamic_print_service.dart';
+import '../services/label_template_persistence_service.dart';
 import '../utils/constants.dart';
 import '../widgets/product_item.dart';
 import 'dynamic_label_templates_screen.dart';
@@ -33,6 +34,7 @@ class _PrintScreenState extends State<PrintScreen> {
 
   // Selected dynamic label template
   DynamicLabelTemplate _selectedTemplate = DynamicLabelTemplates.standard;
+  List<DynamicLabelTemplate> _availableTemplates = [];
 
   // Generated PDF data
   Uint8List? _pdfData;
@@ -41,6 +43,26 @@ class _PrintScreenState extends State<PrintScreen> {
   void initState() {
     super.initState();
     _loadProducts();
+    _loadTemplates();
+  }
+
+  Future<void> _loadTemplates() async {
+    try {
+      final templates =
+          await LabelTemplatePersistenceService.getAllTemplatesWithBuiltIn();
+      setState(() {
+        _availableTemplates = templates;
+        if (templates.isNotEmpty) {
+          _selectedTemplate = templates.first;
+        }
+      });
+    } catch (e) {
+      // Fallback to built-in templates
+      setState(() {
+        _availableTemplates = DynamicLabelTemplates.allTemplates;
+        _selectedTemplate = DynamicLabelTemplates.standard;
+      });
+    }
   }
 
   void _handleSearch(String query) {
@@ -412,7 +434,7 @@ class _PrintScreenState extends State<PrintScreen> {
                     ),
                     value: _selectedTemplate,
                     items:
-                        DynamicLabelTemplates.allTemplates.map((template) {
+                        _availableTemplates.map((template) {
                           return DropdownMenuItem<DynamicLabelTemplate>(
                             value: template,
                             child: Text(template.name),

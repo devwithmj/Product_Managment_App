@@ -9,8 +9,7 @@ import '../widgets/dynamic_label_widget.dart';
 class DynamicPrintScreen extends StatefulWidget {
   final List<Product> products;
 
-  const DynamicPrintScreen({Key? key, required this.products})
-    : super(key: key);
+  const DynamicPrintScreen({super.key, required this.products});
 
   @override
   State<DynamicPrintScreen> createState() => _DynamicPrintScreenState();
@@ -133,7 +132,7 @@ class _DynamicPrintScreenState extends State<DynamicPrintScreen> {
                         ],
                       ),
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),

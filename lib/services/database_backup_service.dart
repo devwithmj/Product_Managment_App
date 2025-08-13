@@ -5,8 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
-import 'package:permission_handler/permission_handler.dart';
-
+import 'storage_permission_service.dart';
 import '../models/product.dart';
 import 'database_service.dart';
 
@@ -62,19 +61,24 @@ class DatabaseBackupService {
   // Import database from a JSON file
   Future<String> importDatabase() async {
     try {
-      // Request storage permission
-      var status = await Permission.storage.status;
-      if (!status.isGranted) {
-        status = await Permission.storage.request();
-        if (!status.isGranted) {
-          return 'Storage permission denied';
-        }
+      // Request storage permissions with enhanced handling
+      final permissionResult =
+          await StoragePermissionService.requestStoragePermissions();
+
+      if (permissionResult == StoragePermissionResult.denied) {
+        return 'Storage permission denied. Please grant permission to import files.';
+      } else if (permissionResult ==
+          StoragePermissionResult.permanentlyDenied) {
+        return 'Storage permission permanently denied. Please enable in app settings.';
+      } else if (permissionResult == StoragePermissionResult.error) {
+        return 'Error requesting storage permission.';
       }
 
       // Pick a file
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
+        dialogTitle: 'Select Database Backup File',
       );
 
       if (result == null || result.files.isEmpty) {
